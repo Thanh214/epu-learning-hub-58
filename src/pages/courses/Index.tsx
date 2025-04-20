@@ -4,6 +4,7 @@ import CourseGrid from '@/components/features/courses/CourseGrid';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
+import CategoryBar from '@/components/features/courses/CategoryBar';
 
 // Sample course data
 const allCourses = [
@@ -75,14 +76,47 @@ const allCourses = [
 
 const CoursesPage = () => {
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [selectedCategory, setSelectedCategory] = React.useState('all');
   const [filteredCourses, setFilteredCourses] = React.useState(allCourses);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    const filtered = allCourses.filter(course => 
-      course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.description.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    filterCourses(searchTerm, selectedCategory);
+  };
+
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    filterCourses(searchTerm, category);
+  };
+
+  const filterCourses = (search: string, category: string) => {
+    let filtered = allCourses;
+
+    // Apply search filter
+    if (search) {
+      filtered = filtered.filter(course => 
+        course.title.toLowerCase().includes(search.toLowerCase()) ||
+        course.description.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    // Apply category filter
+    if (category !== 'all') {
+      // In a real application, you would filter based on actual category data
+      // This is just a demonstration
+      filtered = filtered.filter(course => {
+        // Simulating category filtering - you should adjust this based on your actual data structure
+        const courseCategories: { [key: string]: string[] } = {
+          'programming': ['Lập trình web với React', 'Phát triển ứng dụng di động với Flutter'],
+          'design': ['Thiết kế đồ họa với Adobe Illustrator'],
+          'business': ['Quản lý dự án phần mềm'],
+          'language': [],
+          'marketing': [],
+        };
+        return courseCategories[category]?.includes(course.title);
+      });
+    }
+
     setFilteredCourses(filtered);
   };
 
@@ -109,6 +143,11 @@ const CoursesPage = () => {
         </div>
       </section>
 
+      <CategoryBar 
+        selectedCategory={selectedCategory}
+        onCategoryChange={handleCategoryChange}
+      />
+
       {filteredCourses.length === 0 ? (
         <div className="container py-20 text-center">
           <h2 className="text-2xl font-bold mb-4">Không tìm thấy khóa học</h2>
@@ -117,6 +156,7 @@ const CoursesPage = () => {
           </p>
           <Button onClick={() => {
             setSearchTerm('');
+            setSelectedCategory('all');
             setFilteredCourses(allCourses);
           }}>
             Xem tất cả khóa học
