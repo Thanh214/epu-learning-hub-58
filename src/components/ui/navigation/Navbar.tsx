@@ -6,7 +6,6 @@ import {
   Book,
   Menu,
   X,
-  Search,
   User,
   LogIn
 } from 'lucide-react';
@@ -36,27 +35,14 @@ const Navbar = () => {
           <Link to="/about" className="text-sm font-medium transition-colors hover:text-primary">
             Giới thiệu
           </Link>
-          <Link to="/contact" className="text-sm font-medium transition-colors hover:text-primary">
-            Liên hệ
-          </Link>
         </nav>
 
         <div className="hidden md:flex flex-1 items-center justify-end space-x-4">
-          <div className="w-full max-w-sm lg:max-w-xs">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <input
-                type="search"
-                placeholder="Tìm kiếm khóa học..."
-                className="w-full bg-background py-2 pl-8 pr-4 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-          </div>
           {isLoggedIn ? (
-            <Link to="/dashboard">
+            <Link to="/profile">
               <Button variant="outline" size="sm" className="gap-2">
                 <User className="h-4 w-4" />
-                Dashboard
+                Profile
               </Button>
             </Link>
           ) : (
@@ -93,14 +79,6 @@ const Navbar = () => {
       {isMenuOpen && (
         <div className="md:hidden border-b">
           <div className="container py-4 grid gap-4">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <input
-                type="search"
-                placeholder="Tìm kiếm khóa học..."
-                className="w-full bg-background py-2 pl-8 pr-4 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
             <nav className="grid gap-2">
               <Link 
                 to="/" 
@@ -123,20 +101,13 @@ const Navbar = () => {
               >
                 Giới thiệu
               </Link>
-              <Link 
-                to="/contact" 
-                className="flex items-center gap-2 py-2 text-muted-foreground hover:text-foreground"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Liên hệ
-              </Link>
             </nav>
             <div className="flex flex-col gap-2">
               {isLoggedIn ? (
-                <Link to="/dashboard" onClick={() => setIsMenuOpen(false)}>
+                <Link to="/profile" onClick={() => setIsMenuOpen(false)}>
                   <Button variant="outline" className="w-full justify-start gap-2">
                     <User className="h-4 w-4" />
-                    Dashboard
+                    Profile
                   </Button>
                 </Link>
               ) : (
