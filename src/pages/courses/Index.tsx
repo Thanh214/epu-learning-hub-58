@@ -6,73 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
 import CategoryBar from '@/components/features/courses/CategoryBar';
 
-// Sample course data
-const allCourses = [
-  {
-    id: 1,
-    title: 'Lập trình web với React',
-    description: 'Học cách xây dựng ứng dụng web hiện đại với React, Hooks và Redux.',
-    thumbnail: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee',
-    enrollmentCount: 1240,
-    chapterCount: 12,
-  },
-  {
-    id: 2,
-    title: 'Cơ sở dữ liệu SQL cơ bản đến nâng cao',
-    description: 'Khám phá ngôn ngữ truy vấn SQL từ căn bản đến các kỹ thuật nâng cao.',
-    thumbnail: 'https://images.unsplash.com/photo-1654278767692-3e5ea2eee5ed',
-    enrollmentCount: 980,
-    chapterCount: 10,
-  },
-  {
-    id: 3,
-    title: 'Thiết kế đồ họa với Adobe Illustrator',
-    description: 'Học cách sử dụng Adobe Illustrator để tạo ra các thiết kế đồ họa chuyên nghiệp.',
-    thumbnail: 'https://images.unsplash.com/photo-1611532736188-04d1edb5a3dc',
-    enrollmentCount: 760,
-    chapterCount: 8,
-  },
-  {
-    id: 4,
-    title: 'Machine Learning cơ bản',
-    description: 'Giới thiệu về Machine Learning và các thuật toán cơ bản trong AI.',
-    thumbnail: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485',
-    enrollmentCount: 1450,
-    chapterCount: 14,
-  },
-  {
-    id: 5,
-    title: 'Phát triển ứng dụng di động với Flutter',
-    description: 'Xây dựng ứng dụng di động đa nền tảng với Flutter framework.',
-    thumbnail: 'https://images.unsplash.com/photo-1617040619263-41c5a9ca7521',
-    enrollmentCount: 890,
-    chapterCount: 11,
-  },
-  {
-    id: 6,
-    title: 'Quản lý dự án phần mềm',
-    description: 'Học các phương pháp và kỹ thuật quản lý dự án phần mềm hiệu quả.',
-    thumbnail: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c',
-    enrollmentCount: 670,
-    chapterCount: 9,
-  },
-  {
-    id: 7,
-    title: 'Mạng máy tính cơ bản',
-    description: 'Tìm hiểu về các khái niệm và cấu trúc cơ bản của mạng máy tính.',
-    thumbnail: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8',
-    enrollmentCount: 820,
-    chapterCount: 10,
-  },
-  {
-    id: 8,
-    title: 'An toàn và bảo mật thông tin',
-    description: 'Học cách bảo vệ hệ thống thông tin khỏi các mối đe dọa và tấn công mạng.',
-    thumbnail: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3',
-    enrollmentCount: 950,
-    chapterCount: 12,
-  },
-];
+// Empty course data array
+const allCourses = [];
 
 const CoursesPage = () => {
   const [searchTerm, setSearchTerm] = React.useState('');
@@ -103,17 +38,9 @@ const CoursesPage = () => {
     // Apply category filter
     if (category !== 'all') {
       // In a real application, you would filter based on actual category data
-      // This is just a demonstration
       filtered = filtered.filter(course => {
-        // Simulating category filtering - you should adjust this based on your actual data structure
-        const courseCategories: { [key: string]: string[] } = {
-          'programming': ['Lập trình web với React', 'Phát triển ứng dụng di động với Flutter'],
-          'design': ['Thiết kế đồ họa với Adobe Illustrator'],
-          'business': ['Quản lý dự án phần mềm'],
-          'language': [],
-          'marketing': [],
-        };
-        return courseCategories[category]?.includes(course.title);
+        // This would be replaced with actual category data from backend
+        return true; // Placeholder for actual filtering logic
       });
     }
 
@@ -152,15 +79,17 @@ const CoursesPage = () => {
         <div className="container py-20 text-center">
           <h2 className="text-2xl font-bold mb-4">Không tìm thấy khóa học</h2>
           <p className="text-muted-foreground mb-8">
-            Không có khóa học nào phù hợp với tìm kiếm "{searchTerm}".
+            {searchTerm ? `Không có khóa học nào phù hợp với tìm kiếm "${searchTerm}".` : 'Chưa có khóa học nào.'}
           </p>
-          <Button onClick={() => {
-            setSearchTerm('');
-            setSelectedCategory('all');
-            setFilteredCourses(allCourses);
-          }}>
-            Xem tất cả khóa học
-          </Button>
+          {searchTerm && (
+            <Button onClick={() => {
+              setSearchTerm('');
+              setSelectedCategory('all');
+              setFilteredCourses(allCourses);
+            }}>
+              Xem tất cả khóa học
+            </Button>
+          )}
         </div>
       ) : (
         <div className="my-8">

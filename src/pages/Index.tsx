@@ -6,33 +6,8 @@ import StatsSection from '@/components/features/stats/StatsSection';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 
-// Sample course data
-const featuredCourses = [
-  {
-    id: 1,
-    title: 'Lập trình web với React',
-    description: 'Học cách xây dựng ứng dụng web hiện đại với React, Hooks và Redux.',
-    thumbnail: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee',
-    enrollmentCount: 1240,
-    chapterCount: 12,
-  },
-  {
-    id: 2,
-    title: 'Cơ sở dữ liệu SQL cơ bản đến nâng cao',
-    description: 'Khám phá ngôn ngữ truy vấn SQL từ căn bản đến các kỹ thuật nâng cao.',
-    thumbnail: 'https://images.unsplash.com/photo-1654278767692-3e5ea2eee5ed',
-    enrollmentCount: 980,
-    chapterCount: 10,
-  },
-  {
-    id: 3,
-    title: 'Thiết kế đồ họa với Adobe Illustrator',
-    description: 'Học cách sử dụng Adobe Illustrator để tạo ra các thiết kế đồ họa chuyên nghiệp.',
-    thumbnail: 'https://images.unsplash.com/photo-1611532736188-04d1edb5a3dc',
-    enrollmentCount: 760,
-    chapterCount: 8,
-  },
-];
+// Empty course data array
+const featuredCourses = [];
 
 const Index = () => {
   return (

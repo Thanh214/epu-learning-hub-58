@@ -2,28 +2,29 @@
 import React from 'react';
 import { Book, Users, Award, Clock } from 'lucide-react';
 
+// These could later be populated from the backend
 const stats = [
   {
     icon: Book,
-    value: '200+',
+    value: '0',
     label: 'Khóa học',
     description: 'Đa dạng chủ đề học tập'
   },
   {
     icon: Clock,
-    value: '1,500+',
+    value: '0',
     label: 'Giờ học',
     description: 'Nội dung chất lượng cao'
   },
   {
     icon: Users,
-    value: '5,000+',
+    value: '0',
     label: 'Học viên',
     description: 'Cùng nhau học tập và phát triển'
   },
   {
     icon: Award,
-    value: '95%',
+    value: '0%',
     label: 'Tỷ lệ hoàn thành',
     description: 'Học viên đạt chứng chỉ'
   }

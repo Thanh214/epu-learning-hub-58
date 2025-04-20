@@ -1,5 +1,4 @@
-
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,88 +6,30 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   BookOpen,
   Clock,
-  BarChart,
-  CheckCircle,
   ChevronRight,
   FileText,
   Users
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
-// Sample course data
-const courseData = {
-  id: 1,
-  title: 'Lập trình web với React',
-  description: 'Khóa học này cung cấp kiến thức toàn diện về React, thư viện JavaScript phổ biến nhất để xây dựng giao diện người dùng. Từ cơ bản đến nâng cao, bạn sẽ học cách xây dựng các ứng dụng web hiện đại, tương tác cao với React.',
-  thumbnail: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee',
-  enrollmentCount: 1240,
-  chapterCount: 4,
-  totalLessons: 16,
-  estimatedHours: 24,
-  chapters: [
-    {
-      id: 1,
-      title: 'Giới thiệu về React',
-      lessons: [
-        { id: 1, title: 'React là gì và tại sao nên sử dụng nó?' },
-        { id: 2, title: 'Cài đặt môi trường phát triển' },
-        { id: 3, title: 'JSX và cú pháp cơ bản' },
-        { id: 4, title: 'Components và Props' },
-      ]
-    },
-    {
-      id: 2,
-      title: 'State và Lifecycle',
-      lessons: [
-        { id: 5, title: 'State trong React component' },
-        { id: 6, title: 'Lifecycle methods' },
-        { id: 7, title: 'Xử lý sự kiện trong React' },
-        { id: 8, title: 'Conditional rendering' },
-      ]
-    },
-    {
-      id: 3,
-      title: 'Hooks và Functional Components',
-      lessons: [
-        { id: 9, title: 'Giới thiệu về React Hooks' },
-        { id: 10, title: 'useState và useEffect' },
-        { id: 11, title: 'Custom hooks' },
-        { id: 12, title: 'Context API và useContext' },
-      ]
-    },
-    {
-      id: 4,
-      title: 'Xây dựng dự án thực tế',
-      lessons: [
-        { id: 13, title: 'Thiết lập dự án React' },
-        { id: 14, title: 'Routing với React Router' },
-        { id: 15, title: 'State management với Redux' },
-        { id: 16, title: 'Deploy ứng dụng React' },
-      ]
-    }
-  ]
-};
-
 const CourseDetailPage = () => {
   const { id } = useParams();
-  const [course, setCourse] = useState(courseData);
-  const [isLoading, setIsLoading] = useState(false);
+  const [course, setCourse] = React.useState<any>(null);
+  const [isLoading, setIsLoading] = React.useState(false);
   const { toast } = useToast();
   
-  // In a real app, you would fetch the course data based on the ID
-  useEffect(() => {
+  React.useEffect(() => {
     console.log('Course ID:', id);
-    // Fetch course data here
+    setCourse(null);
   }, [id]);
 
   const handleEnroll = () => {
     setIsLoading(true);
     
-    // Simulate API call
     setTimeout(() => {
       toast({
         title: "Đăng ký thành công!",
-        description: `Bạn đã đăng ký khóa học "${course.title}"`,
+        description: `Bạn đã đăng ký khóa học thành công`,
       });
       setIsLoading(false);
     }, 1000);
