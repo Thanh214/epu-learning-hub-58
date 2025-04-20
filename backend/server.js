@@ -1,0 +1,58 @@
+const express = require('express');
+const cors = require('cors');
+const dotenv = require('dotenv');
+
+// Load environment variables
+dotenv.config();
+
+// Import routes and database initialization
+const authRoutes = require('./routes/auth');
+const courseRoutes = require('./routes/courseRoutes');
+const { initializeDatabase } = require('./utils/dbInit');
+
+// Initialize express app
+const app = express();
+
+// Middleware
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:8080', 'http://127.0.0.1:8080'],
+  credentials: true
+}));
+app.use(express.json());
+
+// Initialize the database
+initializeDatabase()
+  .then(() => {
+    console.log('Database initialization completed');
+  })
+  .catch(err => {
+    console.error('Database initialization failed:', err);
+  });
+
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/courses', courseRoutes);
+
+// Debug route
+app.get('/api/debug', (req, res) => {
+  res.json({
+    message: 'API is working',
+    env: {
+      node_env: process.env.NODE_ENV,
+      db_host: process.env.DB_HOST,
+      db_name: process.env.DB_NAME,
+      port: process.env.PORT
+    }
+  });
+});
+
+// Default route
+app.get('/', (req, res) => {
+  res.send('EPU Learning Hub API is running');
+});
+
+// Start server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+}); 

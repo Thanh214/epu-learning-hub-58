@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,34 +12,69 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
+import axios from 'axios';
+import { useAuth } from '@/context/AuthContext';
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     setIsLoading(true);
     
     try {
-      // Implement actual login logic here
-      console.log('Login attempt:', { email, password });
+      console.log('Đang gửi dữ liệu đăng nhập:', { email, password: '******' });
       
-      // Simulate API request
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Gửi request trực tiếp đến API proxy
+      const response = await axios.post('/api/auth/login', { 
+        email, 
+        password 
+      });
+      
+      console.log('Login response:', response.data);
+      
+      // Sử dụng context để đăng nhập
+      login(response.data.token, response.data.user);
       
       toast({
         title: "Đăng nhập thành công!",
-        description: "Đang chuyển hướng đến trang dashboard...",
+        description: "Đang chuyển hướng đến trang chủ...",
       });
       
-      // In a real app, you would redirect to dashboard or home page here
-    } catch (error) {
+      // Chuyển hướng đến trang chủ sau khi đăng nhập thành công
+      setTimeout(() => {
+        navigate('/');
+      }, 1000);
+      
+    } catch (error: any) {
+      console.error('Login error:', error);
+      
+      let errorMessage = "Email hoặc mật khẩu không đúng. Vui lòng thử lại.";
+      
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          errorMessage = error.response.data?.message || errorMessage;
+          console.error('Server error response:', error.response.data);
+        } else if (error.request) {
+          errorMessage = "Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.";
+          console.error('No response received:', error.request);
+        } else {
+          errorMessage = `Lỗi khi thiết lập request: ${error.message}`;
+        }
+      }
+      
+      setError(errorMessage);
+      
       toast({
         title: "Đăng nhập thất bại",
-        description: "Email hoặc mật khẩu không đúng. Vui lòng thử lại.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -58,6 +92,11 @@ const LoginForm = () => {
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
+          {error && (
+            <div className="p-3 bg-destructive/15 text-destructive rounded-md text-sm">
+              {error}
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input

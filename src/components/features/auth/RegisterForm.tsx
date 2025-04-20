@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,6 +12,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
+import { authAPI } from '@/lib/api';
+import axios from 'axios';
 
 const RegisterForm = () => {
   const [fullName, setFullName] = useState('');
@@ -20,10 +21,13 @@ const RegisterForm = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     
     if (password !== confirmPassword) {
       toast({
@@ -37,22 +41,58 @@ const RegisterForm = () => {
     setIsLoading(true);
     
     try {
-      // Implement actual registration logic here
-      console.log('Registration attempt:', { fullName, email, password });
+      console.log('Đang gửi dữ liệu đăng ký:', {
+        full_name: fullName,
+        email,
+        password: '******',
+      });
       
-      // Simulate API request
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Gửi request trực tiếp đến API proxy
+      const response = await axios.post('/api/auth/register', {
+        full_name: fullName,
+        email,
+        password,
+        password_confirm: confirmPassword
+      });
+      
+      console.log('Registration response:', response.data);
+      
+      // Lưu token vào localStorage
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+      }
       
       toast({
         title: "Đăng ký thành công!",
-        description: "Vui lòng đăng nhập với tài khoản mới của bạn.",
+        description: "Tài khoản của bạn đã được tạo thành công.",
       });
       
-      // In a real app, you would redirect to login or dashboard
-    } catch (error) {
+      // Chuyển hướng đến trang đăng nhập sau khi đăng ký thành công
+      setTimeout(() => {
+        navigate('/auth/login');
+      }, 1500);
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      
+      let errorMessage = "Có lỗi xảy ra. Vui lòng thử lại sau.";
+      
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          errorMessage = error.response.data?.message || errorMessage;
+          console.error('Server error response:', error.response.data);
+        } else if (error.request) {
+          errorMessage = "Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.";
+          console.error('No response received:', error.request);
+        } else {
+          errorMessage = `Lỗi khi thiết lập request: ${error.message}`;
+        }
+      }
+      
+      setError(errorMessage);
+      
       toast({
         title: "Đăng ký thất bại",
-        description: "Có lỗi xảy ra. Vui lòng thử lại sau.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -70,6 +110,11 @@ const RegisterForm = () => {
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
+          {error && (
+            <div className="p-3 bg-destructive/15 text-destructive rounded-md text-sm">
+              {error}
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="fullName">Họ và tên</Label>
             <Input

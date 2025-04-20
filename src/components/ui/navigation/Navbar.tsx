@@ -1,18 +1,44 @@
-
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
   Book,
   Menu,
   X,
   User,
-  LogIn
+  LogIn,
+  LogOut,
+  ChevronDown
 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const isLoggedIn = false; // This will be replaced with actual auth state
+  const { user, isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
+  // Tạo avatar fallback từ tên người dùng
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase();
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -38,13 +64,40 @@ const Navbar = () => {
         </nav>
 
         <div className="hidden md:flex flex-1 items-center justify-end space-x-4">
-          {isLoggedIn ? (
-            <Link to="/profile">
-              <Button variant="outline" size="sm" className="gap-2">
-                <User className="h-4 w-4" />
-                Profile
-              </Button>
-            </Link>
+          {isAuthenticated ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback>{user?.full_name ? getInitials(user.full_name) : 'U'}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{user?.full_name}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate('/profile')}>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Trang cá nhân</span>
+                </DropdownMenuItem>
+                {user?.role === 'admin' && (
+                  <DropdownMenuItem onClick={() => navigate('/admin')}>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Quản trị</span>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Đăng xuất</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <div className="flex items-center gap-2">
               <Link to="/auth/login">
@@ -103,13 +156,36 @@ const Navbar = () => {
               </Link>
             </nav>
             <div className="flex flex-col gap-2">
-              {isLoggedIn ? (
-                <Link to="/profile" onClick={() => setIsMenuOpen(false)}>
-                  <Button variant="outline" className="w-full justify-start gap-2">
-                    <User className="h-4 w-4" />
-                    Profile
+              {isAuthenticated ? (
+                <>
+                  {user && (
+                    <div className="py-2 px-3 mb-2 bg-muted rounded-md">
+                      <p className="font-medium">{user.full_name}</p>
+                      <p className="text-sm text-muted-foreground">{user.email}</p>
+                    </div>
+                  )}
+                  <Link to="/profile" onClick={() => setIsMenuOpen(false)}>
+                    <Button variant="outline" className="w-full justify-start gap-2">
+                      <User className="h-4 w-4" />
+                      Trang cá nhân
+                    </Button>
+                  </Link>
+                  {user?.role === 'admin' && (
+                    <Link to="/admin" onClick={() => setIsMenuOpen(false)}>
+                      <Button variant="outline" className="w-full justify-start gap-2">
+                        <User className="h-4 w-4" />
+                        Quản trị
+                      </Button>
+                    </Link>
+                  )}
+                  <Button variant="destructive" onClick={() => {
+                    handleLogout();
+                    setIsMenuOpen(false);
+                  }} className="w-full justify-start gap-2">
+                    <LogOut className="h-4 w-4" />
+                    Đăng xuất
                   </Button>
-                </Link>
+                </>
               ) : (
                 <>
                   <Link to="/auth/login" onClick={() => setIsMenuOpen(false)}>

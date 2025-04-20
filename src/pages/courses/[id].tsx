@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,32 +8,115 @@ import {
   Clock,
   ChevronRight,
   FileText,
-  Users
+  Users,
+  CheckCircle,
+  Loader2
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import axios from 'axios';
+
+interface Lesson {
+  id: number;
+  title: string;
+  lesson_order: number;
+}
+
+interface Chapter {
+  id: number;
+  title: string;
+  chapter_order: number;
+  lessons: Lesson[];
+  lesson_count: number;
+}
+
+interface Course {
+  id: number;
+  title: string;
+  description: string;
+  thumbnail: string;
+  chapter_count: number;
+  lesson_count: number;
+  enrollment_count: number;
+  chapters: Chapter[];
+  estimatedHours?: number;
+}
 
 const CourseDetailPage = () => {
   const { id } = useParams();
-  const [course, setCourse] = React.useState<any>(null);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [course, setCourse] = useState<Course | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
   const { toast } = useToast();
   
-  React.useEffect(() => {
-    console.log('Course ID:', id);
-    setCourse(null);
-  }, [id]);
+  useEffect(() => {
+    const fetchCourseDetails = async () => {
+      setIsFetching(true);
+      try {
+        const response = await axios.get(`/api/courses/${id}`);
+        
+        if (response.data.status === 'success') {
+          const courseData = response.data.data.course;
+          
+          // Tính toán số giờ ước tính dựa trên số bài học
+          const estimatedHours = Math.max(1, Math.ceil(courseData.lesson_count / 2));
+          
+          setCourse({
+            ...courseData,
+            thumbnail: courseData.thumbnail || 'https://placehold.co/600x400?text=EPU+Learning',
+            estimatedHours
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching course details:', error);
+        toast({
+          title: "Lỗi",
+          description: "Không thể tải thông tin khóa học. Vui lòng thử lại sau.",
+          variant: "destructive"
+        });
+        setCourse(null);
+      } finally {
+        setIsFetching(false);
+      }
+    };
+    
+    if (id) {
+      fetchCourseDetails();
+    }
+  }, [id, toast]);
 
-  const handleEnroll = () => {
+  const handleEnroll = async () => {
     setIsLoading(true);
     
-    setTimeout(() => {
+    try {
+      // Trong thực tế, đây sẽ là một cuộc gọi API để đăng ký khóa học
+      // await axios.post(`/api/courses/${id}/enroll`);
+      
+      // Mô phỏng cuộc gọi API
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       toast({
         title: "Đăng ký thành công!",
-        description: `Bạn đã đăng ký khóa học thành công`,
+        description: `Bạn đã đăng ký khóa học "${course?.title}" thành công`,
       });
+    } catch (error) {
+      console.error('Error enrolling in course:', error);
+      toast({
+        title: "Lỗi",
+        description: "Không thể đăng ký khóa học. Vui lòng thử lại sau.",
+        variant: "destructive"
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
+
+  if (isFetching) {
+    return (
+      <div className="container py-20 flex justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   if (!course) {
     return (
@@ -62,11 +145,11 @@ const CourseDetailPage = () => {
               <div className="flex flex-wrap gap-6 mt-6">
                 <div className="flex items-center gap-2">
                   <BookOpen className="h-5 w-5" />
-                  <span>{course.chapterCount} chương</span>
+                  <span>{course.chapter_count} chương</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <FileText className="h-5 w-5" />
-                  <span>{course.totalLessons} bài học</span>
+                  <span>{course.lesson_count} bài học</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="h-5 w-5" />
@@ -74,7 +157,7 @@ const CourseDetailPage = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <Users className="h-5 w-5" />
-                  <span>{course.enrollmentCount} học viên</span>
+                  <span>{course.enrollment_count} học viên</span>
                 </div>
               </div>
               
@@ -117,25 +200,35 @@ const CourseDetailPage = () => {
               <h2 className="text-2xl font-bold mb-4">Chương trình học</h2>
               
               <div className="space-y-4">
-                {course.chapters.map((chapter) => (
-                  <Card key={chapter.id} className="overflow-hidden">
-                    <div className="bg-muted p-4 font-medium text-lg border-b">
-                      {chapter.title}
-                    </div>
-                    <CardContent className="p-0">
-                      <ul className="divide-y">
-                        {chapter.lessons.map((lesson) => (
-                          <li key={lesson.id} className="p-4 flex justify-between items-center">
-                            <div className="flex items-center gap-2">
-                              <FileText className="h-4 w-4 text-muted-foreground" />
-                              <span>{lesson.title}</span>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
-                ))}
+                {course.chapters && course.chapters.length > 0 ? (
+                  course.chapters.map((chapter) => (
+                    <Card key={chapter.id} className="overflow-hidden">
+                      <div className="bg-muted p-4 font-medium text-lg border-b">
+                        {chapter.title}
+                      </div>
+                      <CardContent className="p-0">
+                        <ul className="divide-y">
+                          {chapter.lessons && chapter.lessons.length > 0 ? (
+                            chapter.lessons.map((lesson) => (
+                              <li key={lesson.id} className="p-4 flex justify-between items-center">
+                                <div className="flex items-center gap-2">
+                                  <FileText className="h-4 w-4 text-muted-foreground" />
+                                  <span>{lesson.title}</span>
+                                </div>
+                              </li>
+                            ))
+                          ) : (
+                            <li className="p-4 text-muted-foreground">Chưa có bài học nào trong chương này</li>
+                          )}
+                        </ul>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">Khóa học này chưa có nội dung</p>
+                  </div>
+                )}
               </div>
             </TabsContent>
             
@@ -145,10 +238,7 @@ const CourseDetailPage = () => {
                   <div>
                     <h2 className="text-2xl font-bold mb-4">Giới thiệu khóa học</h2>
                     <p className="text-muted-foreground">
-                      React là một thư viện JavaScript phổ biến và mạnh mẽ để xây dựng giao diện người dùng. 
-                      Trong khóa học này, bạn sẽ học tất cả những gì cần biết để bắt đầu xây dựng ứng dụng web 
-                      hiện đại với React. Từ các khái niệm cơ bản như components và props đến các tính năng 
-                      nâng cao như hooks và context API.
+                      {course.description}
                     </p>
                   </div>
                   
@@ -212,11 +302,11 @@ const CourseDetailPage = () => {
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Chương:</span>
-                          <span className="font-medium">{course.chapterCount}</span>
+                          <span className="font-medium">{course.chapter_count}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Bài học:</span>
-                          <span className="font-medium">{course.totalLessons}</span>
+                          <span className="font-medium">{course.lesson_count}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Chứng chỉ:</span>

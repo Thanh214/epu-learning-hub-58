@@ -1,18 +1,54 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import CourseGrid from '@/components/features/courses/CourseGrid';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search } from 'lucide-react';
+import { Search, Loader2 } from 'lucide-react';
 import CategoryBar from '@/components/features/courses/CategoryBar';
-
-// Empty course data array
-const allCourses = [];
+import axios from 'axios';
+import { CourseProps } from '@/components/features/courses/CourseCard';
+import { toast } from '@/hooks/use-toast';
 
 const CoursesPage = () => {
-  const [searchTerm, setSearchTerm] = React.useState('');
-  const [selectedCategory, setSelectedCategory] = React.useState('all');
-  const [filteredCourses, setFilteredCourses] = React.useState(allCourses);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [allCourses, setAllCourses] = useState<CourseProps[]>([]);
+  const [filteredCourses, setFilteredCourses] = useState<CourseProps[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Lấy dữ liệu khóa học từ API
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        setIsLoading(true);
+        const response = await axios.get('/api/courses');
+        
+        if (response.data.status === 'success') {
+          const coursesData = response.data.data.courses.map((course: any) => ({
+            id: course.id,
+            title: course.title,
+            description: course.description,
+            thumbnail: course.thumbnail || 'https://placehold.co/600x400?text=EPU+Learning',
+            enrollmentCount: course.enrollment_count || 0,
+            chapterCount: course.chapter_count || 0
+          }));
+          
+          setAllCourses(coursesData);
+          setFilteredCourses(coursesData);
+        }
+      } catch (error) {
+        console.error('Error fetching courses:', error);
+        toast({
+          title: "Lỗi",
+          description: "Không thể tải danh sách khóa học. Vui lòng thử lại sau.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchCourses();
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +61,7 @@ const CoursesPage = () => {
   };
 
   const filterCourses = (search: string, category: string) => {
-    let filtered = allCourses;
+    let filtered = [...allCourses];
 
     // Apply search filter
     if (search) {
@@ -37,10 +73,10 @@ const CoursesPage = () => {
 
     // Apply category filter
     if (category !== 'all') {
-      // In a real application, you would filter based on actual category data
+      // Trong một ứng dụng thực tế, bạn sẽ lọc dựa trên dữ liệu danh mục thực tế
       filtered = filtered.filter(course => {
-        // This would be replaced with actual category data from backend
-        return true; // Placeholder for actual filtering logic
+        // Đây là nơi để thêm logic lọc theo danh mục
+        return true; // Placeholder cho logic lọc thực tế
       });
     }
 
@@ -51,7 +87,7 @@ const CoursesPage = () => {
     <div className="min-h-screen pb-12">
       <section className="bg-muted/50 py-12">
         <div className="container">
-          <h1 className="heading-xl mb-8 text-center">Khóa học</h1>
+          <h1 className="text-3xl font-bold mb-8 text-center">Khóa học</h1>
           <div className="max-w-2xl mx-auto">
             <form onSubmit={handleSearch} className="flex w-full gap-2">
               <div className="relative flex-1">
@@ -75,7 +111,11 @@ const CoursesPage = () => {
         onCategoryChange={handleCategoryChange}
       />
 
-      {filteredCourses.length === 0 ? (
+      {isLoading ? (
+        <div className="container py-20 flex justify-center">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      ) : filteredCourses.length === 0 ? (
         <div className="container py-20 text-center">
           <h2 className="text-2xl font-bold mb-4">Không tìm thấy khóa học</h2>
           <p className="text-muted-foreground mb-8">

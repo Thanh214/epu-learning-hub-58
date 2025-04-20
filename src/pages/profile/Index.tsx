@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -8,77 +7,84 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { BookOpen, FileText, UserCircle, Lock, Edit } from 'lucide-react';
+import { BookOpen, FileText, UserCircle, Lock, Edit, Loader2 } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { toast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
+import axios from 'axios';
+import { formatDate } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
 
-// Sample user data - would come from API/backend in a real application
-const userData = {
-  id: 1,
-  fullName: 'Nguyễn Văn A',
-  email: 'nguyenvana@example.com',
-  avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde',
-  joinedDate: '10/05/2023',
-};
+// Interfaces cho dữ liệu
+interface EnrolledCourse {
+  id: number;
+  course_id: number;
+  title: string;
+  progress_percent: number;
+  thumbnail: string;
+  updatedAt: string;
+}
 
-// Sample enrolled courses data
-const enrolledCourses = [
-  {
-    id: 1,
-    title: 'Lập trình web với React',
-    progress: 65,
-    thumbnail: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee',
-    updatedAt: '2 ngày trước'
-  },
-  {
-    id: 2,
-    title: 'Cơ sở dữ liệu SQL',
-    progress: 32,
-    thumbnail: 'https://images.unsplash.com/photo-1654278767692-3e5ea2eee5ed',
-    updatedAt: '1 tuần trước'
-  },
-];
+interface ExamResult {
+  id: number;
+  exam_id: number;
+  exam_title: string;
+  course_title: string;
+  score: number;
+  completed_at: string;
+}
 
-// Sample exam results data
-const examResults = [
-  {
-    id: 1,
-    examTitle: 'Kiểm tra React Hooks',
-    courseTitle: 'Lập trình web với React',
-    score: 85,
-    date: '15/03/2025',
-  },
-  {
-    id: 2,
-    examTitle: 'Kiểm tra SQL cơ bản',
-    courseTitle: 'Cơ sở dữ liệu SQL',
-    score: 78,
-    date: '10/04/2025',
-  },
-];
-
-// Sample certificates data
-const certificates = [
-  {
-    id: 1,
-    title: 'JavaScript cơ bản',
-    issuedAt: '10/01/2023',
-  },
-];
+interface Certificate {
+  id: number;
+  course_id: number;
+  title: string;
+  issued_at: string;
+  certificate_url: string;
+}
 
 const ProfilePage = () => {
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const navigate = useNavigate();
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [loading, setLoading] = useState({
+    courses: false,
+    exams: false,
+    certificates: false
+  });
+  
+  // State cho dữ liệu từ API
+  const [enrolledCourses, setEnrolledCourses] = useState<EnrolledCourse[]>([]);
+  const [examResults, setExamResults] = useState<ExamResult[]>([]);
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
 
+  // Chuyển hướng nếu chưa đăng nhập
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      navigate('/auth/login');
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+  
+  // Form cho chỉnh sửa hồ sơ
   const profileForm = useForm({
     defaultValues: {
-      fullName: userData.fullName,
-      email: userData.email,
+      fullName: '',
+      email: '',
     }
   });
+  
+  // Cập nhật giá trị form khi user được tải
+  useEffect(() => {
+    if (user) {
+      profileForm.reset({
+        fullName: user.full_name,
+        email: user.email
+      });
+    }
+  }, [user, profileForm]);
 
   const passwordForm = useForm({
     defaultValues: {
@@ -87,6 +93,64 @@ const ProfilePage = () => {
       confirmPassword: '',
     }
   });
+
+  // Tải dữ liệu khóa học đã đăng ký
+  const fetchEnrolledCourses = async () => {
+    if (!user) return;
+    
+    try {
+      setLoading(prev => ({ ...prev, courses: true }));
+      const response = await axios.get('/api/user/enrolled-courses');
+      setEnrolledCourses(response.data.courses || []);
+    } catch (error) {
+      console.error('Error fetching enrolled courses:', error);
+      // Trong trường hợp lỗi, có thể hiển thị dữ liệu mẫu để demo
+      setEnrolledCourses([]);
+    } finally {
+      setLoading(prev => ({ ...prev, courses: false }));
+    }
+  };
+
+  // Tải dữ liệu kết quả bài kiểm tra
+  const fetchExamResults = async () => {
+    if (!user) return;
+    
+    try {
+      setLoading(prev => ({ ...prev, exams: true }));
+      const response = await axios.get('/api/user/exam-results');
+      setExamResults(response.data.exams || []);
+    } catch (error) {
+      console.error('Error fetching exam results:', error);
+      setExamResults([]);
+    } finally {
+      setLoading(prev => ({ ...prev, exams: false }));
+    }
+  };
+
+  // Tải dữ liệu chứng chỉ
+  const fetchCertificates = async () => {
+    if (!user) return;
+    
+    try {
+      setLoading(prev => ({ ...prev, certificates: true }));
+      const response = await axios.get('/api/user/certificates');
+      setCertificates(response.data.certificates || []);
+    } catch (error) {
+      console.error('Error fetching certificates:', error);
+      setCertificates([]);
+    } finally {
+      setLoading(prev => ({ ...prev, certificates: false }));
+    }
+  };
+
+  // Tải dữ liệu khi component được render và user đã đăng nhập
+  useEffect(() => {
+    if (user) {
+      fetchEnrolledCourses();
+      fetchExamResults();
+      fetchCertificates();
+    }
+  }, [user]);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -100,33 +164,100 @@ const ProfilePage = () => {
     }
   };
 
-  const handleProfileSubmit = (data: {fullName: string, email: string}) => {
-    // In a real app, would send data to API
-    console.log("Profile data to update:", data);
-    
-    // Upload avatar if changed
-    if (avatarFile) {
-      console.log("Uploading avatar:", avatarFile);
-      // Would handle file upload to server here
-    }
+  const handleProfileSubmit = async (data: {fullName: string, email: string}) => {
+    try {
+      // Gửi request cập nhật thông tin cá nhân
+      const response = await axios.put('/api/auth/me', {
+        full_name: data.fullName,
+        email: data.email
+      });
+      
+      // Upload avatar nếu có thay đổi
+      if (avatarFile) {
+        const formData = new FormData();
+        formData.append('avatar', avatarFile);
+        await axios.post('/api/auth/upload-avatar', formData);
+      }
 
-    toast({
-      title: "Hồ sơ đã được cập nhật",
-      description: "Thông tin cá nhân của bạn đã được lưu thành công.",
-    });
-    setIsEditingProfile(false);
+      toast({
+        title: "Hồ sơ đã được cập nhật",
+        description: "Thông tin cá nhân của bạn đã được lưu thành công.",
+      });
+      
+      // Cập nhật user context nếu cần
+      // updateUser(response.data.user);
+      
+      setIsEditingProfile(false);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast({
+        title: "Lỗi cập nhật",
+        description: "Không thể cập nhật thông tin. Vui lòng thử lại sau.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handlePasswordSubmit = (data: {currentPassword: string, newPassword: string, confirmPassword: string}) => {
-    // In a real app, would send data to API
-    console.log("Password data to update:", data);
-    
-    toast({
-      title: "Mật khẩu đã được cập nhật",
-      description: "Mật khẩu của bạn đã được thay đổi thành công.",
-    });
-    setIsChangingPassword(false);
-    passwordForm.reset();
+  const handlePasswordSubmit = async (data: {currentPassword: string, newPassword: string, confirmPassword: string}) => {
+    try {
+      if (data.newPassword !== data.confirmPassword) {
+        toast({
+          title: "Lỗi",
+          description: "Mật khẩu mới và xác nhận mật khẩu không khớp",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Gửi request đổi mật khẩu với phương thức POST thay vì PUT
+      await axios.post('/api/auth/change-password', {
+        current_password: data.currentPassword,
+        new_password: data.newPassword,
+      });
+      
+      toast({
+        title: "Mật khẩu đã được cập nhật",
+        description: "Mật khẩu của bạn đã được thay đổi thành công.",
+      });
+      
+      setIsChangingPassword(false);
+      passwordForm.reset();
+    } catch (error) {
+      console.error('Error changing password:', error);
+      toast({
+        title: "Lỗi đổi mật khẩu",
+        description: "Không thể đổi mật khẩu. Vui lòng kiểm tra mật khẩu hiện tại của bạn.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Hiển thị loader khi đang tải
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  // Chắc chắn user đã tồn tại
+  if (!user) {
+    return null;
+  }
+
+  // Format ngày tham gia
+  const formattedJoinDate = user && user.created_at 
+    ? new Date(user.created_at).toLocaleDateString('vi-VN') 
+    : new Date().toLocaleDateString('vi-VN');
+
+  // Lấy chữ cái đầu từ tên người dùng
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase();
   };
 
   return (
@@ -161,8 +292,7 @@ const ProfilePage = () => {
                   <div className="flex flex-col md:flex-row gap-8 items-start">
                     <div className="flex flex-col items-center">
                       <Avatar className="h-32 w-32">
-                        <AvatarImage src={userData.avatar} alt={userData.fullName} />
-                        <AvatarFallback>{userData.fullName.charAt(0)}</AvatarFallback>
+                        <AvatarFallback>{getInitials(user.full_name)}</AvatarFallback>
                       </Avatar>
                       <Button 
                         variant="outline" 
@@ -178,15 +308,15 @@ const ProfilePage = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <Label>Họ và tên</Label>
-                          <div className="text-base mt-1">{userData.fullName}</div>
+                          <div className="text-base mt-1">{user.full_name}</div>
                         </div>
                         <div>
                           <Label>Email</Label>
-                          <div className="text-base mt-1">{userData.email}</div>
+                          <div className="text-base mt-1">{user.email}</div>
                         </div>
                         <div>
                           <Label>Ngày tham gia</Label>
-                          <div className="text-base mt-1">{userData.joinedDate}</div>
+                          <div className="text-base mt-1">{formattedJoinDate}</div>
                         </div>
                       </div>
                     </div>
@@ -197,8 +327,8 @@ const ProfilePage = () => {
                       <div className="flex flex-col md:flex-row gap-8 items-start">
                         <div className="flex flex-col items-center">
                           <Avatar className="h-32 w-32">
-                            <AvatarImage src={avatarPreview || userData.avatar} alt={userData.fullName} />
-                            <AvatarFallback>{userData.fullName.charAt(0)}</AvatarFallback>
+                            <AvatarImage src={avatarPreview || undefined} alt={user.full_name} />
+                            <AvatarFallback>{getInitials(user.full_name)}</AvatarFallback>
                           </Avatar>
                           <div className="mt-4">
                             <Label htmlFor="avatar" className="cursor-pointer">
@@ -266,14 +396,19 @@ const ProfilePage = () => {
                   Quản lý mật khẩu và bảo mật tài khoản
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-6">
                 {!isChangingPassword ? (
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Lock className="h-4 w-4" />
-                      <span>Mật khẩu</span>
+                    <div className="space-y-1">
+                      <h3 className="font-medium">Mật khẩu</h3>
+                      <p className="text-sm text-muted-foreground">••••••••</p>
                     </div>
-                    <Button variant="outline" onClick={() => setIsChangingPassword(true)}>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setIsChangingPassword(true)}
+                    >
+                      <Lock className="h-4 w-4 mr-2" />
                       Đổi mật khẩu
                     </Button>
                   </div>
@@ -313,13 +448,13 @@ const ProfilePage = () => {
                           <FormItem>
                             <FormLabel>Xác nhận mật khẩu mới</FormLabel>
                             <FormControl>
-                              <Input type="password" placeholder="Xác nhận mật khẩu mới" {...field} />
+                              <Input type="password" placeholder="Nhập lại mật khẩu mới" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-end gap-2 pt-2">
                         <Button type="button" variant="outline" onClick={() => setIsChangingPassword(false)}>
                           Hủy
                         </Button>
@@ -340,92 +475,115 @@ const ProfilePage = () => {
               <CardHeader>
                 <CardTitle>Khóa học của tôi</CardTitle>
                 <CardDescription>
-                  Danh sách các khóa học bạn đã đăng ký
+                  Danh sách các khóa học bạn đã đăng ký và tiến trình học tập
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {enrolledCourses.length > 0 ? (
-                  <div className="space-y-6">
+                {loading.courses ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : enrolledCourses.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {enrolledCourses.map((course) => (
-                      <div key={course.id} className="flex flex-col md:flex-row gap-4 pb-6 border-b last:border-0">
-                        <div className="w-full md:w-48 h-32 bg-muted rounded-md overflow-hidden">
-                          <img 
-                            src={course.thumbnail} 
-                            alt={course.title} 
-                            className="h-full w-full object-cover"
-                          />
+                      <div key={course.id} className="border rounded-lg overflow-hidden">
+                        <div className="h-40 bg-muted flex items-center justify-center">
+                          {course.thumbnail ? (
+                            <img 
+                              src={course.thumbnail} 
+                              alt={course.title} 
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <BookOpen className="h-12 w-12 text-muted-foreground" />
+                          )}
                         </div>
-                        <div className="flex-1 space-y-3">
-                          <h3 className="font-semibold text-lg">{course.title}</h3>
-                          <div className="space-y-1">
-                            <div className="flex justify-between text-sm">
-                              <span>Tiến độ:</span>
-                              <span className="font-medium">{course.progress}%</span>
+                        <div className="p-4">
+                          <h3 className="font-medium">{course.title}</h3>
+                          <div className="mt-2 space-y-2">
+                            <div className="text-sm text-muted-foreground flex justify-between">
+                              <span>Tiến trình</span>
+                              <span>{course.progress_percent}%</span>
                             </div>
-                            <Progress value={course.progress} className="h-2" />
+                            <Progress value={course.progress_percent} className="h-2" />
                           </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-muted-foreground">Cập nhật {course.updatedAt}</span>
-                            <Button>Tiếp tục học</Button>
+                          <div className="mt-4 flex justify-between items-center">
+                            <span className="text-xs text-muted-foreground">
+                              Cập nhật: {course.updatedAt}
+                            </span>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => navigate(`/courses/${course.course_id}`)}
+                            >
+                              Tiếp tục học
+                            </Button>
                           </div>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8">
-                    <BookOpen className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <h3 className="text-lg font-medium mb-1">Chưa có khóa học nào</h3>
-                    <p className="text-muted-foreground mb-4">Bạn chưa đăng ký khóa học nào</p>
-                    <Button>Khám phá khóa học</Button>
+                  <div className="text-center py-12">
+                    <BookOpen className="h-12 w-12 mx-auto text-muted-foreground" />
+                    <h3 className="mt-4 text-lg font-medium">Bạn chưa đăng ký khóa học nào</h3>
+                    <p className="mt-2 text-muted-foreground">
+                      Hãy khám phá các khóa học của chúng tôi để bắt đầu hành trình học tập
+                    </p>
+                    <Button 
+                      className="mt-4"
+                      onClick={() => navigate('/courses')}
+                    >
+                      Khám phá khóa học
+                    </Button>
                   </div>
                 )}
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* Exam Results tab */}
+          {/* Exam results tab */}
           <TabsContent value="results">
             <Card>
               <CardHeader>
                 <CardTitle>Kết quả học tập</CardTitle>
                 <CardDescription>
-                  Kết quả bài kiểm tra và bài tập của bạn
+                  Kết quả các bài kiểm tra bạn đã hoàn thành
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {examResults.length > 0 ? (
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Bài kiểm tra</TableHead>
-                          <TableHead>Khóa học</TableHead>
-                          <TableHead className="text-right">Điểm</TableHead>
-                          <TableHead className="text-right">Ngày</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {examResults.map((result) => (
-                          <TableRow key={result.id}>
-                            <TableCell className="font-medium">{result.examTitle}</TableCell>
-                            <TableCell>{result.courseTitle}</TableCell>
-                            <TableCell className="text-right">
-                              <span className={`font-medium ${result.score >= 80 ? 'text-green-600' : result.score >= 60 ? 'text-amber-600' : 'text-red-600'}`}>
-                                {result.score}/100
-                              </span>
-                            </TableCell>
-                            <TableCell className="text-right">{result.date}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                {loading.exams ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin" />
                   </div>
+                ) : examResults.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Tên bài kiểm tra</TableHead>
+                        <TableHead>Khóa học</TableHead>
+                        <TableHead>Điểm số</TableHead>
+                        <TableHead>Ngày hoàn thành</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {examResults.map((result) => (
+                        <TableRow key={result.id}>
+                          <TableCell className="font-medium">{result.exam_title}</TableCell>
+                          <TableCell>{result.course_title}</TableCell>
+                          <TableCell>{result.score}/100</TableCell>
+                          <TableCell>{result.completed_at}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 ) : (
-                  <div className="text-center py-8">
-                    <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <h3 className="text-lg font-medium mb-1">Chưa có kết quả nào</h3>
-                    <p className="text-muted-foreground">Bạn chưa hoàn thành bài kiểm tra nào</p>
+                  <div className="text-center py-12">
+                    <FileText className="h-12 w-12 mx-auto text-muted-foreground" />
+                    <h3 className="mt-4 text-lg font-medium">Chưa có kết quả nào</h3>
+                    <p className="mt-2 text-muted-foreground">
+                      Hoàn thành các bài kiểm tra trong khóa học để xem kết quả ở đây
+                    </p>
                   </div>
                 )}
               </CardContent>
@@ -436,35 +594,41 @@ const ProfilePage = () => {
           <TabsContent value="certificates">
             <Card>
               <CardHeader>
-                <CardTitle>Chứng chỉ của tôi</CardTitle>
+                <CardTitle>Chứng chỉ</CardTitle>
                 <CardDescription>
-                  Chứng chỉ bạn đã đạt được từ các khóa học
+                  Các chứng chỉ bạn đã đạt được khi hoàn thành khóa học
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {certificates.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {loading.certificates ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : certificates.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {certificates.map((cert) => (
-                      <Card key={cert.id} className="overflow-hidden">
-                        <div className="aspect-[3/2] border-b bg-muted flex items-center justify-center">
-                          <BookOpen className="h-24 w-24 text-primary" />
+                      <div key={cert.id} className="border rounded-lg p-4">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="font-medium">{cert.title}</h3>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Cấp ngày: {cert.issued_at}
+                            </p>
+                          </div>
+                          <Button size="sm" variant="outline" className="shrink-0">
+                            Xem chứng chỉ
+                          </Button>
                         </div>
-                        <CardHeader>
-                          <CardTitle>{cert.title}</CardTitle>
-                          <CardDescription>Cấp ngày: {cert.issuedAt}</CardDescription>
-                        </CardHeader>
-                        <CardFooter>
-                          <Button variant="outline" className="w-full">Xem chứng chỉ</Button>
-                        </CardFooter>
-                      </Card>
+                      </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8">
-                    <BookOpen className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <h3 className="text-lg font-medium mb-1">Chưa có chứng chỉ nào</h3>
-                    <p className="text-muted-foreground mb-4">Hoàn thành khóa học để nhận chứng chỉ</p>
-                    <Button>Khám phá khóa học</Button>
+                  <div className="text-center py-12">
+                    <FileText className="h-12 w-12 mx-auto text-muted-foreground" />
+                    <h3 className="mt-4 text-lg font-medium">Chưa có chứng chỉ nào</h3>
+                    <p className="mt-2 text-muted-foreground">
+                      Hoàn thành các khóa học để nhận chứng chỉ
+                    </p>
                   </div>
                 )}
               </CardContent>
