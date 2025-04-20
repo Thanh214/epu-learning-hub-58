@@ -12,6 +12,8 @@ import CourseDetailPage from "./pages/courses/[id]";
 import LoginPage from "./pages/auth/Login";
 import RegisterPage from "./pages/auth/Register";
 import Dashboard from "./pages/dashboard/Index";
+import ProfilePage from "./pages/profile/Index";
+import AdminPage from "./pages/admin/Index";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +31,8 @@ const App = () => (
               <Route path="/auth/login" element={<LoginPage />} />
               <Route path="/auth/register" element={<RegisterPage />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/admin" element={<AdminPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
