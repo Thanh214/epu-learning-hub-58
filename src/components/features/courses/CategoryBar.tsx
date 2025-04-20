@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Category } from "lucide-react";
+import { FolderKanban } from "lucide-react";
 
 const categories = [
   { id: 'all', label: 'Tất cả' },
@@ -22,7 +22,7 @@ const CategoryBar = ({ selectedCategory, onCategoryChange }: CategoryBarProps) =
     <div className="w-full py-4">
       <div className="container">
         <div className="flex items-center gap-2 mb-2">
-          <Category className="h-5 w-5 text-muted-foreground" />
+          <FolderKanban className="h-5 w-5 text-muted-foreground" />
           <h3 className="font-medium">Danh mục</h3>
         </div>
         <Tabs value={selectedCategory} onValueChange={onCategoryChange}>
