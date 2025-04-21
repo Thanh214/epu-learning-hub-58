@@ -7,22 +7,38 @@ const developers = [
   {
     name: "Nguyễn Thế Dũng",
     role: "Full Stack Developer",
-    description: "Phát triển giao diện người dùng và quản lý cơ sở dữ liệu"
+    description: "Phát triển giao diện người dùng và quản lý cơ sở dữ liệu",
+    image: "/images/dung.png"
   },
   {
     name: "Nguyễn Hải Nam",
     role: "Frontend Developer",
-    description: "Thiết kế và phát triển giao diện người dùng"
+    description: "Thiết kế và phát triển giao diện người dùng",
+    image: "/images/nam.png"
   },
   {
     name: "Đình Văn Linh",
     role: "Backend Developer",
-    description: "Phát triển và tối ưu hóa hệ thống máy chủ"
+    description: "Phát triển và tối ưu hóa hệ thống máy chủ",
+    image: "/images/linh.png"
   },
   {
     name: "Tống Văn Cao",
     role: "Database Administrator",
-    description: "Quản lý và tối ưu hóa cơ sở dữ liệu"
+    description: "Quản lý và tối ưu hóa cơ sở dữ liệu",
+    image: "/images/cao.png"
+  },
+  {
+    name: "Nguyễn Hoàng Anh Thái",
+    role: "Database Administrator",
+    description: "Hỗ trợ ngân sách và tài chính",
+    image: "/images/thai.png"
+  },
+  {
+    name: "Phạm Thanh Tuyền",
+    role: "Database Administrator",
+    description: "Quản lý ngân sách và tài chính",
+    image: "/images/tuyen.png"
   }
 ];
 
@@ -37,13 +53,17 @@ const AboutPage = () => {
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2">
         {developers.map((dev, index) => (
           <Card key={index} className="text-center">
             <CardHeader className="pb-4">
-              <div className="w-20 h-20 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                <User className="w-10 h-10 text-primary" />
-              </div>
+            <div className="w-20 h-20 mx-auto mb-4">
+              <img
+                src={dev.image}
+                alt={dev.name}
+                className="w-20 h-20 object-cover rounded-full border border-gray-300 shadow"
+              />
+            </div>
               <CardTitle className="text-xl">{dev.name}</CardTitle>
               <CardDescription>{dev.role}</CardDescription>
             </CardHeader>
