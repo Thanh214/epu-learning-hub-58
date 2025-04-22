@@ -23,12 +23,23 @@ interface Lesson {
   lesson_order: number;
 }
 
+interface Question {
+  id: number;
+  question_text: string;
+  option_a: string;
+  option_b: string;
+  option_c: string;
+  option_d: string;
+  correct_answer: string;
+}
+
 interface Chapter {
   id: number;
   title: string;
   chapter_order: number;
   lessons: Lesson[];
   lesson_count: number;
+  questions?: Question[];
 }
 
 interface Course {
@@ -46,8 +57,10 @@ interface Course {
 const CourseDetailPage = () => {
   const { id } = useParams();
   const [course, setCourse] = useState<Course | null>(null);
+  const [courseQuestions, setCourseQuestions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
+  const [isQuestionsLoading, setIsQuestionsLoading] = useState(true);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -122,6 +135,51 @@ const CourseDetailPage = () => {
       fetchCourseDetails();
     }
   }, [id, toast]);
+  
+  // Tải câu hỏi cho khóa học
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      if (!id) return;
+      
+      setIsQuestionsLoading(true);
+      try {
+        // Ở đây, thông thường sẽ fetch từ API, nhưng vì chúng ta chưa có dữ liệu thật, 
+        // sử dụng mảng trống và tạo câu hỏi mẫu trong UI
+        // const response = await axios.get(`/api/questions/course/${id}`);
+        // if (response.data.status === 'success') {
+        //   setCourseQuestions(response.data.data.chapters);
+        // }
+        
+        // Mẫu dữ liệu giả cho câu hỏi
+        if (course && course.chapters) {
+          const sampleQuestions = course.chapters.map(chapter => ({
+            chapter_id: chapter.id,
+            chapter_title: chapter.title,
+            questions: Array(5).fill(0).map((_, i) => ({
+              id: i + 1,
+              question_text: `Câu hỏi ${i + 1} liên quan đến ${chapter.title.toLowerCase()}?`,
+              option_a: 'Đáp án A',
+              option_b: 'Đáp án B',
+              option_c: 'Đáp án C', 
+              option_d: 'Đáp án D',
+              correct_answer: ['A', 'B', 'C', 'D'][Math.floor(Math.random() * 4)]
+            }))
+          }));
+          
+          setCourseQuestions(sampleQuestions);
+        }
+      } catch (error) {
+        console.error('Error fetching questions:', error);
+        setCourseQuestions([]);
+      } finally {
+        setIsQuestionsLoading(false);
+      }
+    };
+    
+    if (course) {
+      fetchQuestions();
+    }
+  }, [id, course]);
 
   const handleEnroll = async () => {
     if (!isAuthenticated) {
@@ -268,8 +326,7 @@ const CourseDetailPage = () => {
           <Tabs defaultValue="curriculum">
             <TabsList className="mb-8">
               <TabsTrigger value="curriculum">Nội dung khóa học</TabsTrigger>
-              <TabsTrigger value="overview">Tổng quan</TabsTrigger>
-              <TabsTrigger value="reviews">Đánh giá</TabsTrigger>
+              <TabsTrigger value="questions">Câu hỏi</TabsTrigger>
             </TabsList>
             
             <TabsContent value="curriculum" className="space-y-6">
@@ -308,113 +365,70 @@ const CourseDetailPage = () => {
               </div>
             </TabsContent>
             
-            <TabsContent value="overview">
-              <div className="grid md:grid-cols-3 gap-8">
-                <div className="md:col-span-2 space-y-6">
-                  <div>
-                    <h2 className="text-2xl font-bold mb-4">Giới thiệu khóa học</h2>
-                    <p className="text-muted-foreground">
-                      {course.description}
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <h2 className="text-2xl font-bold mb-4">Bạn sẽ học gì?</h2>
-                    <ul className="grid sm:grid-cols-2 gap-3">
-                      {[
-                        'Hiểu cách React hoạt động và vai trò của Virtual DOM',
-                        'Xây dựng components và quản lý state',
-                        'Sử dụng React Hooks trong functional components',
-                        'Xử lý forms và validation trong React',
-                        'Triển khai routing với React Router',
-                        'Quản lý state toàn cục với Redux hoặc Context API',
-                        'Tối ưu hóa hiệu suất của ứng dụng React',
-                        'Xây dựng và triển khai một dự án React thực tế'
-                      ].map((item, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          <CheckCircle className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  
-                  <div>
-                    <h2 className="text-2xl font-bold mb-4">Yêu cầu</h2>
-                    <ul className="space-y-2">
-                      {[
-                        'Kiến thức cơ bản về HTML, CSS và JavaScript',
-                        'Hiểu biết về ES6+ syntax (arrow functions, destructuring, etc.)',
-                        'Môi trường phát triển web cơ bản (VS Code, Node.js)',
-                        'Không yêu cầu kinh nghiệm React trước đó'
-                      ].map((item, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          <div className="h-5 w-5 flex items-center justify-center">
-                            <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+            <TabsContent value="questions" className="space-y-6">
+              <h2 className="text-2xl font-bold mb-4">Câu hỏi theo chương</h2>
+              
+              {isQuestionsLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {courseQuestions && courseQuestions.length > 0 ? (
+                    courseQuestions.map((chapterData) => (
+                      <Card key={chapterData.chapter_id} className="overflow-hidden">
+                        <div className="bg-muted p-4 font-medium text-lg border-b flex justify-between items-center">
+                          <span>{chapterData.chapter_title}</span>
+                          <span className="text-sm text-muted-foreground">
+                            {chapterData.questions.length} câu hỏi
+                          </span>
+                        </div>
+                        <CardContent className="p-0">
+                          <div className="p-4 space-y-4">
+                            {chapterData.questions.slice(0, 3).map((question, qIndex) => (
+                              <div key={qIndex} className="border rounded-md p-4">
+                                <div className="font-medium mb-2">
+                                  {qIndex + 1}. {question.question_text}
+                                </div>
+                                <div className="space-y-2 ml-4">
+                                  {[
+                                    {label: 'A', text: question.option_a},
+                                    {label: 'B', text: question.option_b},
+                                    {label: 'C', text: question.option_c},
+                                    {label: 'D', text: question.option_d}
+                                  ].map((option, i) => (
+                                    <div key={i} className="flex items-center gap-2">
+                                      <input 
+                                        type="radio" 
+                                        name={`question-${chapterData.chapter_id}-${qIndex}`} 
+                                        id={`option-${chapterData.chapter_id}-${qIndex}-${i}`}
+                                        className="radio"
+                                      />
+                                      <label htmlFor={`option-${chapterData.chapter_id}-${qIndex}-${i}`}>
+                                        {option.label}. {option.text}
+                                      </label>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                            
+                            {chapterData.questions.length > 3 && (
+                              <div className="mt-4 text-center">
+                                <Button variant="outline">Xem thêm câu hỏi</Button>
+                              </div>
+                            )}
                           </div>
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">Khóa học này chưa có câu hỏi</p>
+                    </div>
+                  )}
                 </div>
-                
-                <div>
-                  <Card>
-                    <CardContent className="p-6">
-                      <h3 className="text-lg font-semibold mb-4">Thông tin khóa học</h3>
-                      <div className="space-y-4">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Cấp độ:</span>
-                          <span className="font-medium">Cơ bản đến Nâng cao</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Ngôn ngữ:</span>
-                          <span className="font-medium">Tiếng Việt</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Thời lượng:</span>
-                          <span className="font-medium">{course.estimatedHours} giờ</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Chương:</span>
-                          <span className="font-medium">{course.chapter_count}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Bài học:</span>
-                          <span className="font-medium">{course.lesson_count}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Chứng chỉ:</span>
-                          <span className="font-medium">Có</span>
-                        </div>
-                      </div>
-                      
-                      <div className="mt-6">
-                        {isEnrolled ? (
-                          <Button className="w-full" onClick={continueLearning}>
-                            Tiếp tục học
-                          </Button>
-                        ) : (
-                          <Button className="w-full" onClick={handleEnroll} disabled={isLoading}>
-                            {isLoading ? "Đang xử lý..." : "Đăng ký học ngay"}
-                          </Button>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="reviews">
-              <div className="py-8 text-center">
-                <h3 className="text-2xl font-semibold mb-2">Đánh giá từ học viên</h3>
-                <p className="text-muted-foreground mb-4">
-                  Chưa có đánh giá nào cho khóa học này.
-                </p>
-                <Button variant="outline">Viết đánh giá đầu tiên</Button>
-              </div>
+              )}
             </TabsContent>
           </Tabs>
         </div>
