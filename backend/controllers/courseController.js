@@ -76,12 +76,46 @@ exports.getCourseById = async (req, res) => {
     
     // Lấy thông tin về các bài học cho mỗi chương
     for (const chapter of chapters) {
+      // Thêm mô tả cho chương nếu không có
+      if (!chapter.description) {
+        chapter.description = `Chương ${chapter.chapter_order}: ${chapter.title}`;
+      }
+      
       const [lessons] = await db.query(`
         SELECT l.*
         FROM lessons l
         WHERE l.chapter_id = ?
         ORDER BY l.lesson_order
       `, [chapter.id]);
+      
+      // Lấy tất cả các trang cho mỗi bài học
+      for (const lesson of lessons) {
+        const [pages] = await db.query(`
+          SELECT p.*
+          FROM pages p
+          WHERE p.lesson_id = ?
+          ORDER BY p.page_number
+        `, [lesson.id]);
+        
+        if (pages.length > 0) {
+          // Lưu tất cả các trang
+          lesson.pages = pages;
+          
+          // Cũng lưu trang đầu tiên làm nội dung mặc định để tương thích ngược
+          lesson.content = pages[0].content;
+          
+          // Thêm thông tin tổng số trang
+          lesson.total_pages = pages.length;
+        } else {
+          // Nếu không có trang, tạo nội dung mặc định
+          lesson.content = `<div class="text-center py-10">
+            <h3 class="text-lg font-semibold mb-2">Nội dung đang được cập nhật</h3>
+            <p>Giảng viên đang trong quá trình biên soạn nội dung bài học này.</p>
+          </div>`;
+          lesson.pages = [];
+          lesson.total_pages = 0;
+        }
+      }
       
       chapter.lessons = lessons;
     }
@@ -370,6 +404,47 @@ exports.getUserEnrolledCourses = async (req, res) => {
     return res.status(500).json({
       status: 'error',
       message: 'Lỗi server khi lấy danh sách khóa học đã đăng ký'
+    });
+  }
+};
+
+/**
+ * @desc    Get featured courses
+ * @route   GET /api/courses/featured
+ * @access  Public
+ */
+exports.getFeaturedCourses = async (req, res) => {
+  try {
+    // Query to get courses with most enrollments and at least one chapter
+    const [courses] = await db.query(`
+      SELECT 
+        c.*,
+        COUNT(DISTINCT ch.id) as chapter_count,
+        COUNT(DISTINCT e.id) as enrollment_count
+      FROM courses c
+      LEFT JOIN chapters ch ON c.id = ch.course_id
+      LEFT JOIN enrollment e ON c.id = e.course_id
+      GROUP BY c.id
+      HAVING COUNT(DISTINCT ch.id) > 0
+      ORDER BY COUNT(DISTINCT e.id) DESC, c.created_at DESC
+      LIMIT 4
+    `);
+    
+    console.log(`Retrieved ${courses.length} featured courses`);
+    
+    res.status(200).json({
+      status: 'success',
+      results: courses.length,
+      data: {
+        courses
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching featured courses:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Không thể lấy dữ liệu khóa học nổi bật',
+      error: error.message
     });
   }
 };

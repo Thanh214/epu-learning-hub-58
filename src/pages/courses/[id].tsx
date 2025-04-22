@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,10 +10,12 @@ import {
   FileText,
   Users,
   CheckCircle,
-  Loader2
+  Loader2,
+  PlayCircle
 } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
 import axios from 'axios';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 
 interface Lesson {
   id: number;
@@ -46,8 +48,45 @@ const CourseDetailPage = () => {
   const [course, setCourse] = useState<Course | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
+  const [isEnrolled, setIsEnrolled] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
   
+  useEffect(() => {
+    const checkEnrollmentStatus = async () => {
+      if (!isAuthenticated || !user) {
+        setIsEnrolled(false);
+        return;
+      }
+      
+      try {
+        const response = await axios.get('/api/courses/user/enrolled');
+        let enrolledCourses = [];
+        
+        if (response.data.status === 'success' && response.data.data) {
+          enrolledCourses = response.data.data.courses;
+        } else if (response.data.courses) {
+          enrolledCourses = response.data.courses;
+        }
+        
+        // Kiểm tra xem người dùng đã đăng ký khóa học này chưa
+        const courseIdNum = parseInt(id as string, 10);
+        const enrolled = enrolledCourses.some((course: any) => {
+          const courseId = course.course_id || course.id;
+          return courseId === courseIdNum;
+        });
+        
+        setIsEnrolled(enrolled);
+      } catch (error) {
+        console.error('Error checking enrollment status:', error);
+        setIsEnrolled(false);
+      }
+    };
+    
+    checkEnrollmentStatus();
+  }, [id, isAuthenticated, user]);
+
   useEffect(() => {
     const fetchCourseDetails = async () => {
       setIsFetching(true);
@@ -85,29 +124,54 @@ const CourseDetailPage = () => {
   }, [id, toast]);
 
   const handleEnroll = async () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Yêu cầu đăng nhập",
+        description: "Vui lòng đăng nhập để đăng ký khóa học.",
+        variant: "destructive"
+      });
+      navigate('/auth/login');
+      return;
+    }
+
     setIsLoading(true);
     
     try {
-      // Trong thực tế, đây sẽ là một cuộc gọi API để đăng ký khóa học
-      // await axios.post(`/api/courses/${id}/enroll`);
-      
-      // Mô phỏng cuộc gọi API
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Gọi API đăng ký khóa học
+      const response = await axios.post(`/api/courses/${id}/enroll`);
       
       toast({
         title: "Đăng ký thành công!",
         description: `Bạn đã đăng ký khóa học "${course?.title}" thành công`,
       });
+
+      // Chuyển hướng đến trang chi tiết khóa học hoặc trang học tập
+      navigate(`/courses/${id}/learn`);
     } catch (error) {
       console.error('Error enrolling in course:', error);
-      toast({
-        title: "Lỗi",
-        description: "Không thể đăng ký khóa học. Vui lòng thử lại sau.",
-        variant: "destructive"
-      });
+      
+      // Kiểm tra nếu lỗi là do đã đăng ký trước đó
+      if (error.response && error.response.status === 400) {
+        toast({
+          title: "Thông báo",
+          description: error.response.data.message || "Bạn đã đăng ký khóa học này rồi.",
+        });
+        // Vẫn chuyển hướng đến trang học tập
+        navigate(`/courses/${id}/learn`);
+      } else {
+        toast({
+          title: "Lỗi",
+          description: "Không thể đăng ký khóa học. Vui lòng thử lại sau.",
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const continueLearning = () => {
+    navigate(`/courses/${id}/learn`);
   };
 
   if (isFetching) {
@@ -162,16 +226,28 @@ const CourseDetailPage = () => {
               </div>
               
               <div className="mt-8">
-                <Button 
-                  size="lg" 
-                  variant="secondary"
-                  className="gap-2"
-                  onClick={handleEnroll}
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Đang xử lý..." : "Đăng ký học ngay"}
-                  {!isLoading && <ChevronRight className="h-4 w-4" />}
-                </Button>
+                {isEnrolled ? (
+                  <Button 
+                    size="lg" 
+                    variant="secondary"
+                    className="gap-2"
+                    onClick={continueLearning}
+                  >
+                    Tiếp tục học
+                    <PlayCircle className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button 
+                    size="lg" 
+                    variant="secondary"
+                    className="gap-2"
+                    onClick={handleEnroll}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Đang xử lý..." : "Đăng ký học ngay"}
+                    {!isLoading && <ChevronRight className="h-4 w-4" />}
+                  </Button>
+                )}
               </div>
             </div>
             
@@ -315,9 +391,15 @@ const CourseDetailPage = () => {
                       </div>
                       
                       <div className="mt-6">
-                        <Button className="w-full" onClick={handleEnroll} disabled={isLoading}>
-                          {isLoading ? "Đang xử lý..." : "Đăng ký học ngay"}
-                        </Button>
+                        {isEnrolled ? (
+                          <Button className="w-full" onClick={continueLearning}>
+                            Tiếp tục học
+                          </Button>
+                        ) : (
+                          <Button className="w-full" onClick={handleEnroll} disabled={isLoading}>
+                            {isLoading ? "Đang xử lý..." : "Đăng ký học ngay"}
+                          </Button>
+                        )}
                       </div>
                     </CardContent>
                   </Card>

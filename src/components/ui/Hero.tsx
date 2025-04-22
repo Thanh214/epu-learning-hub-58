@@ -1,9 +1,19 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 
 const Hero = () => {
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  const handleRegisterClick = (e: React.MouseEvent) => {
+    if (isAuthenticated) {
+      e.preventDefault();
+      navigate('/courses');
+    }
+  };
+
   return (
     <div className="relative bg-gradient-to-br from-primary/10 to-secondary/10 overflow-hidden">
       <div className="absolute inset-0 bg-grid-white/10" />
@@ -23,9 +33,9 @@ const Hero = () => {
                   Khám phá khóa học
                 </Button>
               </Link>
-              <Link to="/auth/register">
+              <Link to={isAuthenticated ? "/courses" : "/auth/register"} onClick={handleRegisterClick}>
                 <Button variant="outline" size="lg">
-                  Đăng ký miễn phí
+                  {isAuthenticated ? "Xem khóa học" : "Đăng ký miễn phí"}
                 </Button>
               </Link>
             </div>

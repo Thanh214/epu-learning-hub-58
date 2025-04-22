@@ -9,6 +9,7 @@ interface User {
   status: string;
   created_at?: string;
   updated_at?: string;
+  avatar_url?: string;
 }
 
 interface AuthContextType {
@@ -17,6 +18,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (token: string, userData: User) => void;
   logout: () => void;
+  updateUser: (userData: User) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -85,13 +87,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(null);
   };
   
+  const updateUser = (userData: User) => {
+    // Cập nhật user trong local storage
+    localStorage.setItem('user', JSON.stringify(userData));
+    
+    // Cập nhật state
+    setUser(userData);
+  };
+  
   return (
     <AuthContext.Provider value={{ 
       user, 
       isAuthenticated: !!user, 
       isLoading,
       login,
-      logout
+      logout,
+      updateUser
     }}>
       {children}
     </AuthContext.Provider>

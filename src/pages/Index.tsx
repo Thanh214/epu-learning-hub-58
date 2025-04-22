@@ -1,24 +1,78 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Hero from '@/components/ui/Hero';
 import CourseGrid from '@/components/features/courses/CourseGrid';
 import StatsSection from '@/components/features/stats/StatsSection';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
-
-// Empty course data array
-const featuredCourses = [];
+import { Link, useNavigate } from 'react-router-dom';
+import { CourseProps } from '@/components/features/courses/CourseCard';
+import axios from 'axios';
+import { toast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 const Index = () => {
+  const [featuredCourses, setFeaturedCourses] = useState<CourseProps[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  const handleRegisterClick = (e: React.MouseEvent) => {
+    if (isAuthenticated) {
+      e.preventDefault();
+      navigate('/courses');
+    }
+  };
+
+  useEffect(() => {
+    const fetchFeaturedCourses = async () => {
+      try {
+        setIsLoading(true);
+        const response = await axios.get('/api/courses/featured');
+        
+        if (response.data.status === 'success') {
+          const coursesData = response.data.data.courses.map((course: any) => ({
+            id: course.id,
+            title: course.title,
+            description: course.description,
+            thumbnail: course.thumbnail || 'https://placehold.co/600x400?text=EPU+Learning',
+            enrollmentCount: course.enrollment_count || 0,
+            chapterCount: course.chapter_count || 0
+          }));
+          
+          setFeaturedCourses(coursesData);
+        }
+      } catch (error) {
+        console.error('Error fetching featured courses:', error);
+        toast({
+          title: "Lỗi",
+          description: "Không thể tải khóa học nổi bật. Vui lòng thử lại sau.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchFeaturedCourses();
+  }, []);
+
   return (
     <div className="min-h-screen">
       <Hero />
       
-      <CourseGrid 
-        title="Khóa học nổi bật" 
-        description="Khám phá các khóa học hàng đầu của chúng tôi được thiết kế để giúp bạn phát triển kỹ năng mới"
-        courses={featuredCourses}
-      />
+      {isLoading ? (
+        <section className="section-padding">
+          <div className="container flex justify-center">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        </section>
+      ) : featuredCourses.length > 0 ? (
+        <CourseGrid 
+          title="Khóa học nổi bật" 
+          description="Khám phá các khóa học hàng đầu của chúng tôi được thiết kế để giúp bạn phát triển kỹ năng mới"
+          courses={featuredCourses}
+        />
+      ) : null}
       
       <StatsSection />
       
@@ -35,9 +89,9 @@ const Index = () => {
                   Khám phá khóa học
                 </Button>
               </Link>
-              <Link to="/auth/register">
+              <Link to={isAuthenticated ? "/courses" : "/auth/register"} onClick={handleRegisterClick}>
                 <Button size="lg" variant="outline" className="bg-transparent text-white border-white hover:bg-white/10">
-                  Đăng ký miễn phí
+                  {isAuthenticated ? "Xem khóa học" : "Đăng ký miễn phí"}
                 </Button>
               </Link>
             </div>

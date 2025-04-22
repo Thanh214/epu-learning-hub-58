@@ -1,123 +1,134 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
-import { UserCircle, BookOpen, FileText, BarChart2, Users, Edit, Trash2, Plus } from 'lucide-react';
+import { UserCircle, BookOpen, FileText, BarChart2, Users, Edit, Trash2, Plus, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { toast } from '@/hooks/use-toast';
-
-// Sample statistics data
-const statistics = {
-  totalUsers: 124,
-  totalCourses: 15,
-  activeCourses: 12,
-  completions: 87,
-};
-
-// Sample users data
-const users = [
-  { id: 1, name: 'Nguyễn Văn A', email: 'vana@example.com', courses: 3, status: 'active', lastActive: '2 giờ trước' },
-  { id: 2, name: 'Trần Thị B', email: 'thib@example.com', courses: 2, status: 'active', lastActive: '1 ngày trước' },
-  { id: 3, name: 'Lê Văn C', email: 'vanc@example.com', courses: 1, status: 'inactive', lastActive: '1 tuần trước' },
-  { id: 4, name: 'Phạm Thị D', email: 'thid@example.com', courses: 4, status: 'active', lastActive: '3 giờ trước' },
-];
-
-// Sample courses data
-const courses = [
-  { 
-    id: 1, 
-    title: 'Lập trình web với React', 
-    enrolledCount: 48, 
-    chaptersCount: 6, 
-    lessonsCount: 24,
-    createdAt: '05/01/2025',
-    updatedAt: '20/03/2025'
-  },
-  { 
-    id: 2, 
-    title: 'Cơ sở dữ liệu SQL', 
-    enrolledCount: 32, 
-    chaptersCount: 5, 
-    lessonsCount: 18,
-    createdAt: '10/02/2025',
-    updatedAt: '15/03/2025'
-  },
-  { 
-    id: 3, 
-    title: 'Lập trình Java cơ bản', 
-    enrolledCount: 56, 
-    chaptersCount: 8, 
-    lessonsCount: 32,
-    createdAt: '15/12/2024',
-    updatedAt: '05/04/2025'
-  },
-];
-
-// Sample course progress data
-const courseProgress = [
-  { courseId: 1, courseName: 'Lập trình web với React', progress: 65, studentsCount: 48 },
-  { courseId: 2, courseName: 'Cơ sở dữ liệu SQL', progress: 42, studentsCount: 32 },
-  { courseId: 3, courseName: 'Lập trình Java cơ bản', progress: 78, studentsCount: 56 },
-];
-
-// Sample exam results data
-const examResults = [
-  { 
-    examId: 1, 
-    examTitle: 'React Hooks', 
-    courseTitle: 'Lập trình web với React',
-    studentCount: 32, 
-    averageScore: 76, 
-    highScore: 98, 
-    lowScore: 45 
-  },
-  { 
-    examId: 2, 
-    examTitle: 'SQL Joins', 
-    courseTitle: 'Cơ sở dữ liệu SQL',
-    studentCount: 28, 
-    averageScore: 82, 
-    highScore: 100, 
-    lowScore: 56 
-  },
-];
-
-// Sample course structure for editing course content
-const courseStructure = {
-  id: 1,
-  title: 'Lập trình web với React',
-  description: 'Khóa học toàn diện về ReactJS và các công nghệ liên quan.',
-  chapters: [
-    {
-      id: 1,
-      title: 'Giới thiệu React',
-      lessons: [
-        { id: 1, title: 'Giới thiệu khóa học' },
-        { id: 2, title: 'Thiết lập môi trường' },
-      ]
-    },
-    {
-      id: 2,
-      title: 'React Components',
-      lessons: [
-        { id: 3, title: 'Function Components' },
-        { id: 4, title: 'Class Components' },
-      ]
-    }
-  ]
-};
+import axios from 'axios';
 
 const AdminPage = () => {
+  // State for storing data from API
+  const [statistics, setStatistics] = useState({
+    totalUsers: 0,
+    totalCourses: 0,
+    activeCourses: 0,
+    completions: 0,
+  });
+  const [users, setUsers] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [courseProgress, setCourseProgress] = useState([]);
+  const [examResults, setExamResults] = useState([]);
+  const [loading, setLoading] = useState({
+    statistics: true,
+    users: true,
+    courses: true,
+    examResults: true
+  });
+
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
   const [selectedChapter, setSelectedChapter] = useState<any>(null);
   const [selectedLesson, setSelectedLesson] = useState<any>(null);
+
+  const [courseStructure, setCourseStructure] = useState<any>({
+    id: 0,
+    title: '',
+    description: '',
+    chapters: []
+  });
+
+  // Fetch data from API
+  useEffect(() => {
+    const fetchStatistics = async () => {
+      try {
+        setLoading(prev => ({ ...prev, statistics: true }));
+        const response = await axios.get('/api/admin/statistics');
+        setStatistics(response.data);
+      } catch (error) {
+        console.error('Error fetching statistics:', error);
+        toast({
+          title: "Lỗi",
+          description: "Không thể tải dữ liệu thống kê. Vui lòng thử lại sau.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(prev => ({ ...prev, statistics: false }));
+      }
+    };
+
+    const fetchUsers = async () => {
+      try {
+        setLoading(prev => ({ ...prev, users: true }));
+        const response = await axios.get('/api/admin/users');
+        setUsers(response.data.users || []);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        toast({
+          title: "Lỗi",
+          description: "Không thể tải dữ liệu người dùng. Vui lòng thử lại sau.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(prev => ({ ...prev, users: false }));
+      }
+    };
+
+    const fetchCourses = async () => {
+      try {
+        setLoading(prev => ({ ...prev, courses: true }));
+        const response = await axios.get('/api/admin/courses');
+        setCourses(response.data.courses || []);
+      } catch (error) {
+        console.error('Error fetching courses:', error);
+        toast({
+          title: "Lỗi",
+          description: "Không thể tải dữ liệu khóa học. Vui lòng thử lại sau.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(prev => ({ ...prev, courses: false }));
+      }
+    };
+
+    const fetchExamResults = async () => {
+      try {
+        setLoading(prev => ({ ...prev, examResults: true }));
+        const response = await axios.get('/api/admin/exam-results');
+        setExamResults(response.data.examResults || []);
+      } catch (error) {
+        console.error('Error fetching exam results:', error);
+        toast({
+          title: "Lỗi",
+          description: "Không thể tải dữ liệu kết quả bài kiểm tra. Vui lòng thử lại sau.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(prev => ({ ...prev, examResults: false }));
+      }
+    };
+
+    const fetchCourseProgress = async () => {
+      try {
+        const response = await axios.get('/api/admin/course-progress');
+        setCourseProgress(response.data.courseProgress || []);
+      } catch (error) {
+        console.error('Error fetching course progress:', error);
+      }
+    };
+
+    // Call all fetch functions
+    fetchStatistics();
+    fetchUsers();
+    fetchCourses();
+    fetchExamResults();
+    fetchCourseProgress();
+  }, []);
 
   // Forms
   const courseForm = useForm({
@@ -165,40 +176,130 @@ const AdminPage = () => {
     setSelectedLesson(lesson);
   };
 
-  const handleCourseSubmit = (data: any) => {
-    console.log("Create new course:", data);
-    toast({
-      title: "Khóa học đã được tạo",
-      description: "Khóa học mới đã được tạo thành công.",
-    });
-    courseForm.reset();
+  const handleCourseSubmit = async (data: any) => {
+    try {
+      const response = await axios.post('/api/admin/courses', data);
+      toast({
+        title: "Khóa học đã được tạo",
+        description: "Khóa học mới đã được tạo thành công.",
+      });
+      courseForm.reset();
+      // Refresh courses data
+      const coursesResponse = await axios.get('/api/admin/courses');
+      setCourses(coursesResponse.data.courses || []);
+    } catch (error) {
+      console.error("Error creating course:", error);
+      toast({
+        title: "Lỗi",
+        description: "Không thể tạo khóa học. Vui lòng thử lại sau.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleChapterSubmit = (data: any) => {
-    console.log("Create new chapter:", data);
-    toast({
-      title: "Chương học đã được tạo",
-      description: "Chương học mới đã được tạo thành công.",
-    });
-    chapterForm.reset();
+  const handleChapterSubmit = async (data: any) => {
+    try {
+      if (!selectedCourse) {
+        toast({
+          title: "Lỗi",
+          description: "Vui lòng chọn khóa học trước khi thêm chương.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      const response = await axios.post(`/api/admin/courses/${selectedCourse.id}/chapters`, {
+        ...data,
+        course_id: selectedCourse.id
+      });
+      
+      toast({
+        title: "Chương học đã được tạo",
+        description: "Chương học mới đã được tạo thành công.",
+      });
+      chapterForm.reset();
+      
+      // Refresh selected course data
+      const courseResponse = await axios.get(`/api/admin/courses/${selectedCourse.id}`);
+      setSelectedCourse(courseResponse.data);
+    } catch (error) {
+      console.error("Error creating chapter:", error);
+      toast({
+        title: "Lỗi",
+        description: "Không thể tạo chương học. Vui lòng thử lại sau.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleLessonSubmit = (data: any) => {
-    console.log("Create new lesson:", data);
-    toast({
-      title: "Bài học đã được tạo",
-      description: "Bài học mới đã được tạo thành công.",
-    });
-    lessonForm.reset();
+  const handleLessonSubmit = async (data: any) => {
+    try {
+      if (!selectedCourse || !selectedChapter) {
+        toast({
+          title: "Lỗi",
+          description: "Vui lòng chọn khóa học và chương trước khi thêm bài học.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      const response = await axios.post(`/api/admin/chapters/${selectedChapter.id}/lessons`, {
+        ...data,
+        chapter_id: selectedChapter.id
+      });
+      
+      toast({
+        title: "Bài học đã được tạo",
+        description: "Bài học mới đã được tạo thành công.",
+      });
+      lessonForm.reset();
+      
+      // Refresh selected chapter data
+      const chapterResponse = await axios.get(`/api/admin/chapters/${selectedChapter.id}`);
+      setSelectedChapter(chapterResponse.data);
+    } catch (error) {
+      console.error("Error creating lesson:", error);
+      toast({
+        title: "Lỗi",
+        description: "Không thể tạo bài học. Vui lòng thử lại sau.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handlePageSubmit = (data: any) => {
-    console.log("Create new page:", data);
-    toast({
-      title: "Trang nội dung đã được tạo",
-      description: "Trang nội dung mới đã được tạo thành công.",
-    });
-    pageForm.reset();
+  const handlePageSubmit = async (data: any) => {
+    try {
+      if (!selectedLesson) {
+        toast({
+          title: "Lỗi",
+          description: "Vui lòng chọn bài học trước khi thêm trang nội dung.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      const response = await axios.post(`/api/admin/lessons/${selectedLesson.id}/pages`, {
+        ...data,
+        lesson_id: selectedLesson.id
+      });
+      
+      toast({
+        title: "Trang nội dung đã được tạo",
+        description: "Trang nội dung mới đã được tạo thành công.",
+      });
+      pageForm.reset();
+      
+      // Refresh selected lesson data
+      const lessonResponse = await axios.get(`/api/admin/lessons/${selectedLesson.id}`);
+      setSelectedLesson(lessonResponse.data);
+    } catch (error) {
+      console.error("Error creating page:", error);
+      toast({
+        title: "Lỗi",
+        description: "Không thể tạo trang nội dung. Vui lòng thử lại sau.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -219,7 +320,11 @@ const AdminPage = () => {
             </CardHeader>
             <CardContent className="py-0">
               <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold">{statistics.totalUsers}</div>
+                {loading.statistics ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <div className="text-2xl font-bold">{statistics.totalUsers}</div>
+                )}
                 <Users className="h-5 w-5 text-muted-foreground" />
               </div>
             </CardContent>
@@ -231,7 +336,11 @@ const AdminPage = () => {
             </CardHeader>
             <CardContent className="py-0">
               <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold">{statistics.totalCourses}</div>
+                {loading.statistics ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <div className="text-2xl font-bold">{statistics.totalCourses}</div>
+                )}
                 <BookOpen className="h-5 w-5 text-muted-foreground" />
               </div>
             </CardContent>
@@ -243,7 +352,11 @@ const AdminPage = () => {
             </CardHeader>
             <CardContent className="py-0">
               <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold">{statistics.activeCourses}</div>
+                {loading.statistics ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <div className="text-2xl font-bold">{statistics.activeCourses}</div>
+                )}
                 <BookOpen className="h-5 w-5 text-muted-foreground" />
               </div>
             </CardContent>
@@ -255,7 +368,11 @@ const AdminPage = () => {
             </CardHeader>
             <CardContent className="py-0">
               <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold">{statistics.completions}</div>
+                {loading.statistics ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <div className="text-2xl font-bold">{statistics.completions}</div>
+                )}
                 <FileText className="h-5 w-5 text-muted-foreground" />
               </div>
             </CardContent>
@@ -280,20 +397,32 @@ const AdminPage = () => {
                   <CardDescription>Tiến độ trung bình của người học trong các khóa học</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-6">
-                    {courseProgress.map((course) => (
-                      <div key={course.courseId} className="space-y-2">
-                        <div className="flex justify-between">
-                          <span className="font-medium">{course.courseName}</span>
-                          <span>{course.progress}%</span>
+                  {loading.courses ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin" />
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {courseProgress.length > 0 ? (
+                        courseProgress.map((course: any) => (
+                          <div key={course.courseId || course.course_id} className="space-y-2">
+                            <div className="flex justify-between">
+                              <span className="font-medium">{course.courseName || course.course_name}</span>
+                              <span>{course.progress || course.progress_percent || 0}%</span>
+                            </div>
+                            <Progress value={course.progress || course.progress_percent || 0} className="h-2" />
+                            <div className="text-sm text-muted-foreground">
+                              {course.studentsCount || course.students_count || 0} học viên đăng ký
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-4 text-muted-foreground">
+                          Không có dữ liệu tiến độ khóa học
                         </div>
-                        <Progress value={course.progress} className="h-2" />
-                        <div className="text-sm text-muted-foreground">
-                          {course.studentsCount} học viên đăng ký
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
               
@@ -303,30 +432,44 @@ const AdminPage = () => {
                   <CardDescription>Điểm trung bình của người học trong các bài kiểm tra</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Bài kiểm tra</TableHead>
-                          <TableHead className="text-right">Số lượng</TableHead>
-                          <TableHead className="text-right">Điểm TB</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {examResults.map((exam) => (
-                          <TableRow key={exam.examId}>
-                            <TableCell className="font-medium">{exam.examTitle}</TableCell>
-                            <TableCell className="text-right">{exam.studentCount}</TableCell>
-                            <TableCell className="text-right">
-                              <span className={`font-medium ${exam.averageScore >= 80 ? 'text-green-600' : exam.averageScore >= 60 ? 'text-amber-600' : 'text-red-600'}`}>
-                                {exam.averageScore}/100
-                              </span>
-                            </TableCell>
+                  {loading.examResults ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin" />
+                    </div>
+                  ) : (
+                    <div className="rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Bài kiểm tra</TableHead>
+                            <TableHead className="text-right">Số lượng</TableHead>
+                            <TableHead className="text-right">Điểm TB</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
+                        </TableHeader>
+                        <TableBody>
+                          {examResults.length > 0 ? (
+                            examResults.map((exam: any) => (
+                              <TableRow key={exam.examId || exam.exam_id}>
+                                <TableCell className="font-medium">{exam.examTitle || exam.exam_title}</TableCell>
+                                <TableCell className="text-right">{exam.studentCount || exam.student_count || 0}</TableCell>
+                                <TableCell className="text-right">
+                                  <span className={`font-medium ${(exam.averageScore || exam.average_score || 0) >= 80 ? 'text-green-600' : (exam.averageScore || exam.average_score || 0) >= 60 ? 'text-amber-600' : 'text-red-600'}`}>
+                                    {exam.averageScore || exam.average_score || 0}/100
+                                  </span>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell colSpan={3} className="text-center py-4">
+                                Không có dữ liệu kết quả bài kiểm tra
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -346,40 +489,54 @@ const AdminPage = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Tên người dùng</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Khóa học</TableHead>
-                        <TableHead>Trạng thái</TableHead>
-                        <TableHead>Hoạt động gần nhất</TableHead>
-                        <TableHead className="text-right">Thao tác</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {users.map((user) => (
-                        <TableRow key={user.id}>
-                          <TableCell className="font-medium">{user.name}</TableCell>
-                          <TableCell>{user.email}</TableCell>
-                          <TableCell>{user.courses}</TableCell>
-                          <TableCell>
-                            <div className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                              {user.status === 'active' ? 'Hoạt động' : 'Không hoạt động'}
-                            </div>
-                          </TableCell>
-                          <TableCell>{user.lastActive}</TableCell>
-                          <TableCell className="text-right">
-                            <Button variant="ghost" size="icon">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
+                {loading.users ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : (
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Tên người dùng</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Khóa học</TableHead>
+                          <TableHead>Trạng thái</TableHead>
+                          <TableHead>Hoạt động gần nhất</TableHead>
+                          <TableHead className="text-right">Thao tác</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                      </TableHeader>
+                      <TableBody>
+                        {users.length > 0 ? (
+                          users.map((user: any) => (
+                            <TableRow key={user.id}>
+                              <TableCell className="font-medium">{user.name || user.full_name}</TableCell>
+                              <TableCell>{user.email}</TableCell>
+                              <TableCell>{user.course_count || user.courses || 0}</TableCell>
+                              <TableCell>
+                                <div className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                                  {user.status === 'active' ? 'Hoạt động' : 'Không hoạt động'}
+                                </div>
+                              </TableCell>
+                              <TableCell>{user.last_active || user.lastActive || 'Không rõ'}</TableCell>
+                              <TableCell className="text-right">
+                                <Button variant="ghost" size="icon">
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center py-4">
+                              Không có dữ liệu người dùng
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
               </CardContent>
               <CardFooter className="flex justify-between border-t p-4">
                 <div className="text-sm text-muted-foreground">
@@ -449,7 +606,7 @@ const AdminPage = () => {
                               <FormItem>
                                 <FormLabel>Ảnh thumbnail</FormLabel>
                                 <FormControl>
-                                  <Input type="file" className="cursor-pointer" />
+                                  <Input placeholder="Đường dẫn hoặc URL ảnh thumbnail" {...field} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -465,43 +622,55 @@ const AdminPage = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Tiêu đề khóa học</TableHead>
-                        <TableHead>Học viên</TableHead>
-                        <TableHead>Chương</TableHead>
-                        <TableHead>Bài học</TableHead>
-                        <TableHead>Ngày tạo</TableHead>
-                        <TableHead>Cập nhật</TableHead>
-                        <TableHead className="text-right">Thao tác</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {courses.map((course) => (
-                        <TableRow key={course.id}>
-                          <TableCell className="font-medium">{course.title}</TableCell>
-                          <TableCell>{course.enrolledCount}</TableCell>
-                          <TableCell>{course.chaptersCount}</TableCell>
-                          <TableCell>{course.lessonsCount}</TableCell>
-                          <TableCell>{course.createdAt}</TableCell>
-                          <TableCell>{course.updatedAt}</TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
-                              <Button variant="ghost" size="icon">
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
+                {loading.courses ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : (
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Tiêu đề khóa học</TableHead>
+                          <TableHead>Học viên</TableHead>
+                          <TableHead>Chương</TableHead>
+                          <TableHead>Bài học</TableHead>
+                          <TableHead>Ngày tạo</TableHead>
+                          <TableHead>Cập nhật</TableHead>
+                          <TableHead className="text-right">Thao tác</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                      </TableHeader>
+                      <TableBody>
+                        {courses.length > 0 ? (
+                          courses.map((course: any) => (
+                            <TableRow key={course.id}>
+                              <TableCell className="font-medium">{course.title}</TableCell>
+                              <TableCell>{course.enrolled_count || course.enrolledCount || 0}</TableCell>
+                              <TableCell>{course.chapters_count || course.chaptersCount || 0}</TableCell>
+                              <TableCell>{course.lessons_count || course.lessonsCount || 0}</TableCell>
+                              <TableCell>{course.created_at || course.createdAt || 'Không rõ'}</TableCell>
+                              <TableCell>{course.updated_at || course.updatedAt || 'Không rõ'}</TableCell>
+                              <TableCell className="text-right">
+                                <Button variant="ghost" size="icon">
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={7} className="text-center py-4">
+                              Không có dữ liệu khóa học
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

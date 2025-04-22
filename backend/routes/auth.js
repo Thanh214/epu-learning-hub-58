@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
 const { verifyToken } = require('../middleware/auth');
+const { uploadAvatar } = require('../middleware/upload');
 const db = require('../config/db');
 
 // Register a new user
@@ -18,6 +19,9 @@ router.put('/update-profile', verifyToken, authController.updateMe);
 
 // Change password
 router.post('/change-password', verifyToken, authController.changePassword);
+
+// Upload avatar
+router.post('/upload-avatar', verifyToken, uploadAvatar, authController.uploadAvatar);
 
 // Database status check
 router.get('/db-status', async (req, res) => {

@@ -167,7 +167,7 @@ exports.login = async (req, res) => {
 exports.getMe = async (req, res) => {
   try {
     const [users] = await db.query(
-      'SELECT id, full_name, email, role, status, created_at, updated_at FROM users WHERE id = ?',
+      'SELECT id, full_name, email, role, status, avatar_url, created_at, updated_at FROM users WHERE id = ?',
       [req.user.id]
     );
 
@@ -312,6 +312,49 @@ exports.changePassword = async (req, res) => {
     console.error('Change password error:', error);
     res.status(500).json({ 
       message: 'Lỗi server khi đổi mật khẩu',
+      error: error.message 
+    });
+  }
+};
+
+// Upload user avatar
+exports.uploadAvatar = async (req, res) => {
+  try {
+    // Check if file was uploaded 
+    if (!req.file) {
+      return res.status(400).json({ 
+        message: 'Vui lòng chọn ảnh để tải lên' 
+      });
+    }
+
+    // File info is in req.file (provided by multer middleware)
+    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+    
+    // Update user with avatar URL
+    await db.query(
+      'UPDATE users SET avatar_url = ? WHERE id = ?',
+      [avatarUrl, req.user.id]
+    );
+    
+    // Get updated user data
+    const [updatedUser] = await db.query(
+      'SELECT id, full_name, email, role, status, avatar_url, created_at, updated_at FROM users WHERE id = ?',
+      [req.user.id]
+    );
+    
+    if (updatedUser.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    res.status(200).json({
+      message: 'Avatar uploaded successfully',
+      user: updatedUser[0]
+    });
+    
+  } catch (error) {
+    console.error('Avatar upload error:', error);
+    res.status(500).json({ 
+      message: 'Lỗi khi tải lên ảnh đại diện',
       error: error.message 
     });
   }

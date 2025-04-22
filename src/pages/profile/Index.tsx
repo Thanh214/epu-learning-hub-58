@@ -16,14 +16,19 @@ import axios from 'axios';
 import { formatDate } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 
+// Thay thế import AVATAR_URL_PREFIX
+const API_URL = 'http://localhost:8080';
+
 // Interfaces cho dữ liệu
 interface EnrolledCourse {
-  id: number;
   course_id: number;
   title: string;
-  progress_percent: number;
+  description: string;
   thumbnail: string;
-  updatedAt: string;
+  progress_percent: number;
+  status: string;
+  enrolled_date: string;
+  updated_at: string;
 }
 
 interface ExamResult {
@@ -44,7 +49,7 @@ interface Certificate {
 }
 
 const ProfilePage = () => {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, updateUser } = useAuth();
   const navigate = useNavigate();
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -100,7 +105,7 @@ const ProfilePage = () => {
     
     try {
       setLoading(prev => ({ ...prev, courses: true }));
-      const response = await axios.get('/api/user/enrolled-courses');
+      const response = await axios.get('/api/courses/user/enrolled');
       setEnrolledCourses(response.data.courses || []);
     } catch (error) {
       console.error('Error fetching enrolled courses:', error);
@@ -167,9 +172,9 @@ const ProfilePage = () => {
   const handleProfileSubmit = async (data: {fullName: string, email: string}) => {
     try {
       // Gửi request cập nhật thông tin cá nhân
-      const response = await axios.put('/api/auth/me', {
+      const response = await axios.put('/api/auth/update-profile', {
         full_name: data.fullName,
-        email: data.email
+        // Không cập nhật email vì đây là tài khoản đăng nhập
       });
       
       // Upload avatar nếu có thay đổi
@@ -179,15 +184,27 @@ const ProfilePage = () => {
         await axios.post('/api/auth/upload-avatar', formData);
       }
 
+      // Lấy dữ liệu người dùng đã cập nhật từ API
+      if (response.data.user) {
+        // Cập nhật user context với dữ liệu mới từ API
+        updateUser(response.data.user);
+      } else if (user) {
+        // Nếu API không trả về dữ liệu user, thì tự cập nhật context với dữ liệu mới
+        updateUser({
+          ...user,
+          full_name: data.fullName
+        });
+      }
+
       toast({
         title: "Hồ sơ đã được cập nhật",
         description: "Thông tin cá nhân của bạn đã được lưu thành công.",
       });
       
-      // Cập nhật user context nếu cần
-      // updateUser(response.data.user);
-      
       setIsEditingProfile(false);
+      
+      // Tải lại trang sau khi cập nhật để đảm bảo hiển thị dữ liệu mới
+      window.location.reload();
     } catch (error) {
       console.error('Error updating profile:', error);
       toast({
@@ -292,7 +309,13 @@ const ProfilePage = () => {
                   <div className="flex flex-col md:flex-row gap-8 items-start">
                     <div className="flex flex-col items-center">
                       <Avatar className="h-32 w-32">
-                        <AvatarFallback>{getInitials(user.full_name)}</AvatarFallback>
+                        {avatarPreview ? (
+                          <AvatarImage src={avatarPreview} alt={user.full_name} />
+                        ) : user && user.avatar_url ? (
+                          <AvatarImage src={`${API_URL}${user.avatar_url}`} alt={user.full_name} />
+                        ) : (
+                          <AvatarFallback>{getInitials(user.full_name)}</AvatarFallback>
+                        )}
                       </Avatar>
                       <Button 
                         variant="outline" 
@@ -327,8 +350,13 @@ const ProfilePage = () => {
                       <div className="flex flex-col md:flex-row gap-8 items-start">
                         <div className="flex flex-col items-center">
                           <Avatar className="h-32 w-32">
-                            <AvatarImage src={avatarPreview || undefined} alt={user.full_name} />
-                            <AvatarFallback>{getInitials(user.full_name)}</AvatarFallback>
+                            {avatarPreview ? (
+                              <AvatarImage src={avatarPreview} alt={user.full_name} />
+                            ) : user && user.avatar_url ? (
+                              <AvatarImage src={`${API_URL}${user.avatar_url}`} alt={user.full_name} />
+                            ) : (
+                              <AvatarFallback>{getInitials(user.full_name)}</AvatarFallback>
+                            )}
                           </Avatar>
                           <div className="mt-4">
                             <Label htmlFor="avatar" className="cursor-pointer">
@@ -365,9 +393,9 @@ const ProfilePage = () => {
                             name="email"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Email</FormLabel>
+                                <FormLabel>Email (không thể thay đổi)</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="Email" {...field} />
+                                  <Input placeholder="Email" {...field} readOnly disabled className="opacity-70" />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -486,7 +514,7 @@ const ProfilePage = () => {
                 ) : enrolledCourses.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {enrolledCourses.map((course) => (
-                      <div key={course.id} className="border rounded-lg overflow-hidden">
+                      <div key={course.course_id} className="border rounded-lg overflow-hidden">
                         <div className="h-40 bg-muted flex items-center justify-center">
                           {course.thumbnail ? (
                             <img 
@@ -509,7 +537,7 @@ const ProfilePage = () => {
                           </div>
                           <div className="mt-4 flex justify-between items-center">
                             <span className="text-xs text-muted-foreground">
-                              Cập nhật: {course.updatedAt}
+                              Cập nhật: {course.updated_at}
                             </span>
                             <Button 
                               variant="outline" 
