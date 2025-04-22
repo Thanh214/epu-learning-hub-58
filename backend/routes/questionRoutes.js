@@ -1,20 +1,31 @@
-
 const express = require('express');
 const router = express.Router();
-const questionsController = require('../controllers/questionsController');
-const { verifyToken, isAdmin } = require('../middleware/auth');
+const questionController = require('../controllers/questionController');
+const { verifyToken } = require('../middleware/auth');
 
-// Routes công khai - lấy câu hỏi cho khóa học và chương
-router.get('/course/:id', questionsController.getQuestionsByCourseId);
-router.get('/chapter/:id', questionsController.getQuestionsByChapterId);
+// Route công khai (không cần đăng nhập)
+// Lấy tất cả câu hỏi của một khóa học
+router.get('/course/:courseId', questionController.getQuestionsByCourse);
 
-// Routes yêu cầu xác thực admin để thêm/sửa/xóa
+// Lấy tất cả câu hỏi của một chương
+router.get('/chapter/:chapterId', questionController.getQuestionsByChapter);
+
+// Route bảo vệ (cần đăng nhập)
 router.use(verifyToken);
-router.use(isAdmin);
 
-// CRUD Routes
-router.post('/', questionsController.createQuestion);
-router.put('/:id', questionsController.updateQuestion);
-router.delete('/:id', questionsController.deleteQuestion);
+// Thêm câu hỏi mới
+router.post('/', questionController.createQuestion);
+
+// Cập nhật câu hỏi
+router.put('/:id', questionController.updateQuestion);
+
+// Xóa câu hỏi
+router.delete('/:id', questionController.deleteQuestion);
+
+// Tạo câu hỏi mẫu cho chương
+router.post('/sample/chapter/:chapterId', questionController.createSampleQuestions);
+
+// Tạo câu hỏi mẫu cho tất cả các chương trong khóa học
+router.post('/sample/course/:courseId', questionController.createSampleQuestionsForCourse);
 
 module.exports = router;

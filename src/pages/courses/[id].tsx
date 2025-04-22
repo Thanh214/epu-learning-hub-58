@@ -143,30 +143,11 @@ const CourseDetailPage = () => {
       
       setIsQuestionsLoading(true);
       try {
-        // Ở đây, thông thường sẽ fetch từ API, nhưng vì chúng ta chưa có dữ liệu thật, 
-        // sử dụng mảng trống và tạo câu hỏi mẫu trong UI
-        // const response = await axios.get(`/api/questions/course/${id}`);
-        // if (response.data.status === 'success') {
-        //   setCourseQuestions(response.data.data.chapters);
-        // }
-        
-        // Mẫu dữ liệu giả cho câu hỏi
-        if (course && course.chapters) {
-          const sampleQuestions = course.chapters.map(chapter => ({
-            chapter_id: chapter.id,
-            chapter_title: chapter.title,
-            questions: Array(5).fill(0).map((_, i) => ({
-              id: i + 1,
-              question_text: `Câu hỏi ${i + 1} liên quan đến ${chapter.title.toLowerCase()}?`,
-              option_a: 'Đáp án A',
-              option_b: 'Đáp án B',
-              option_c: 'Đáp án C', 
-              option_d: 'Đáp án D',
-              correct_answer: ['A', 'B', 'C', 'D'][Math.floor(Math.random() * 4)]
-            }))
-          }));
-          
-          setCourseQuestions(sampleQuestions);
+        const response = await axios.get(`/api/questions/course/${id}`);
+        if (response.data.status === 'success') {
+          setCourseQuestions(response.data.data.chapters);
+        } else {
+          setCourseQuestions([]);
         }
       } catch (error) {
         console.error('Error fetching questions:', error);
@@ -387,35 +368,20 @@ const CourseDetailPage = () => {
                           <div className="p-4 space-y-4">
                             {chapterData.questions.slice(0, 3).map((question, qIndex) => (
                               <div key={qIndex} className="border rounded-md p-4">
-                                <div className="font-medium mb-2">
+                                <div className="font-medium">
                                   {qIndex + 1}. {question.question_text}
-                                </div>
-                                <div className="space-y-2 ml-4">
-                                  {[
-                                    {label: 'A', text: question.option_a},
-                                    {label: 'B', text: question.option_b},
-                                    {label: 'C', text: question.option_c},
-                                    {label: 'D', text: question.option_d}
-                                  ].map((option, i) => (
-                                    <div key={i} className="flex items-center gap-2">
-                                      <input 
-                                        type="radio" 
-                                        name={`question-${chapterData.chapter_id}-${qIndex}`} 
-                                        id={`option-${chapterData.chapter_id}-${qIndex}-${i}`}
-                                        className="radio"
-                                      />
-                                      <label htmlFor={`option-${chapterData.chapter_id}-${qIndex}-${i}`}>
-                                        {option.label}. {option.text}
-                                      </label>
-                                    </div>
-                                  ))}
                                 </div>
                               </div>
                             ))}
                             
-                            {chapterData.questions.length > 3 && (
+                            {chapterData.questions.length > 0 && (
                               <div className="mt-4 text-center">
-                                <Button variant="outline">Xem thêm câu hỏi</Button>
+                                <Button 
+                                  variant="outline"
+                                  onClick={() => navigate(`/courses/${id}/test/${chapterData.chapter_id}`)}
+                                >
+                                  Làm bài test
+                                </Button>
                               </div>
                             )}
                           </div>

@@ -1,8 +1,5 @@
 const db = require('../config/db');
 
-// Import function để tạo dữ liệu mẫu câu hỏi
-const createQuestionSamples = require('./createQuestionSamples');
-
 // Function to initialize database
 const initializeDatabase = async () => {
   try {
@@ -38,9 +35,6 @@ const initializeDatabase = async () => {
     }
     
     console.log('Database initialization completed');
-    
-    // Tạo dữ liệu mẫu câu hỏi
-    await createQuestionSamples();
   } catch (error) {
     console.error('Database initialization error:', error);
   }
