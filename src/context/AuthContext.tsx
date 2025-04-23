@@ -51,14 +51,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // Thiết lập token cho các request tiếp theo
           axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           
-          // Set user từ localStorage
-          setUser(JSON.parse(storedUser));
+          // Kiểm tra token có hợp lệ không bằng cách gọi API
+          try {
+            const response = await axios.get('/api/auth/me');
+            if (response.data.status === 'success') {
+              // Token hợp lệ, cập nhật thông tin user từ server
+              setUser(response.data.data.user);
+              // Cập nhật lại localStorage với thông tin mới nhất
+              localStorage.setItem('user', JSON.stringify(response.data.data.user));
+            } else {
+              // Token không hợp lệ, đăng xuất
+              logout();
+            }
+          } catch (apiError) {
+            console.error('Error validating token:', apiError);
+            // Token không hợp lệ hoặc đã hết hạn, đăng xuất
+            logout();
+          }
         } catch (error) {
           console.error('Error loading user from storage:', error);
           // Nếu có lỗi, xóa dữ liệu lưu trong localStorage
           localStorage.removeItem('token');
           localStorage.removeItem('user');
         }
+      } else {
+        // Không có token hoặc user trong localStorage
+        setUser(null);
       }
       
       setIsLoading(false);

@@ -11,6 +11,7 @@ const authRoutes = require('./routes/auth');
 const courseRoutes = require('./routes/courseRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const questionRoutes = require('./routes/questionRoutes');
+const examRoutes = require('./routes/examRoutes');
 const { initializeDatabase } = require('./utils/dbInit');
 
 // Initialize express app
@@ -40,6 +41,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/questions', questionRoutes);
+app.use('/api/exams', examRoutes);
 
 // Debug route
 app.get('/api/debug', (req, res) => {

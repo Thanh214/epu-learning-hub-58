@@ -9,6 +9,7 @@ import Navbar from "./components/ui/navigation/Navbar";
 import CoursesPage from "./pages/courses/Index";
 import CourseDetailPage from "./pages/courses/[id]";
 import CourseLearnPage from "./pages/courses/[id]/learn";
+import ExamPage from "./pages/courses/test/[chapterId]";
 import LoginPage from "./pages/auth/Login";
 import RegisterPage from "./pages/auth/Register";
 import ProfilePage from "./pages/profile/Index";
@@ -31,6 +32,7 @@ const App = () => (
                 <Route path="/courses" element={<CoursesPage />} />
                 <Route path="/courses/:id" element={<CourseDetailPage />} />
                 <Route path="/courses/:id/learn" element={<CourseLearnPage />} />
+                <Route path="/courses/:id/test/:chapterId" element={<ExamPage />} />
                 <Route path="/auth/login" element={<LoginPage />} />
                 <Route path="/auth/register" element={<RegisterPage />} />
                 <Route path="/profile" element={<ProfilePage />} />

@@ -179,11 +179,11 @@ const AdminPage = () => {
   const handleCourseSubmit = async (data: any) => {
     try {
       const response = await axios.post('/api/admin/courses', data);
-      toast({
-        title: "Khóa học đã được tạo",
-        description: "Khóa học mới đã được tạo thành công.",
-      });
-      courseForm.reset();
+    toast({
+      title: "Khóa học đã được tạo",
+      description: "Khóa học mới đã được tạo thành công.",
+    });
+    courseForm.reset();
       // Refresh courses data
       const coursesResponse = await axios.get('/api/admin/courses');
       setCourses(coursesResponse.data.courses || []);
@@ -213,11 +213,11 @@ const AdminPage = () => {
         course_id: selectedCourse.id
       });
       
-      toast({
-        title: "Chương học đã được tạo",
-        description: "Chương học mới đã được tạo thành công.",
-      });
-      chapterForm.reset();
+    toast({
+      title: "Chương học đã được tạo",
+      description: "Chương học mới đã được tạo thành công.",
+    });
+    chapterForm.reset();
       
       // Refresh selected course data
       const courseResponse = await axios.get(`/api/admin/courses/${selectedCourse.id}`);
@@ -248,11 +248,11 @@ const AdminPage = () => {
         chapter_id: selectedChapter.id
       });
       
-      toast({
-        title: "Bài học đã được tạo",
-        description: "Bài học mới đã được tạo thành công.",
-      });
-      lessonForm.reset();
+    toast({
+      title: "Bài học đã được tạo",
+      description: "Bài học mới đã được tạo thành công.",
+    });
+    lessonForm.reset();
       
       // Refresh selected chapter data
       const chapterResponse = await axios.get(`/api/admin/chapters/${selectedChapter.id}`);
@@ -283,11 +283,11 @@ const AdminPage = () => {
         lesson_id: selectedLesson.id
       });
       
-      toast({
-        title: "Trang nội dung đã được tạo",
-        description: "Trang nội dung mới đã được tạo thành công.",
-      });
-      pageForm.reset();
+    toast({
+      title: "Trang nội dung đã được tạo",
+      description: "Trang nội dung mới đã được tạo thành công.",
+    });
+    pageForm.reset();
       
       // Refresh selected lesson data
       const lessonResponse = await axios.get(`/api/admin/lessons/${selectedLesson.id}`);
@@ -323,7 +323,7 @@ const AdminPage = () => {
                 {loading.statistics ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <div className="text-2xl font-bold">{statistics.totalUsers}</div>
+                <div className="text-2xl font-bold">{statistics.totalUsers}</div>
                 )}
                 <Users className="h-5 w-5 text-muted-foreground" />
               </div>
@@ -339,7 +339,7 @@ const AdminPage = () => {
                 {loading.statistics ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <div className="text-2xl font-bold">{statistics.totalCourses}</div>
+                <div className="text-2xl font-bold">{statistics.totalCourses}</div>
                 )}
                 <BookOpen className="h-5 w-5 text-muted-foreground" />
               </div>
@@ -355,7 +355,7 @@ const AdminPage = () => {
                 {loading.statistics ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <div className="text-2xl font-bold">{statistics.activeCourses}</div>
+                <div className="text-2xl font-bold">{statistics.activeCourses}</div>
                 )}
                 <BookOpen className="h-5 w-5 text-muted-foreground" />
               </div>
@@ -371,7 +371,7 @@ const AdminPage = () => {
                 {loading.statistics ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <div className="text-2xl font-bold">{statistics.completions}</div>
+                <div className="text-2xl font-bold">{statistics.completions}</div>
                 )}
                 <FileText className="h-5 w-5 text-muted-foreground" />
               </div>
@@ -402,24 +402,24 @@ const AdminPage = () => {
                       <Loader2 className="h-8 w-8 animate-spin" />
                     </div>
                   ) : (
-                    <div className="space-y-6">
+                  <div className="space-y-6">
                       {courseProgress.length > 0 ? (
                         courseProgress.map((course: any) => (
                           <div key={course.courseId || course.course_id} className="space-y-2">
-                            <div className="flex justify-between">
+                        <div className="flex justify-between">
                               <span className="font-medium">{course.courseName || course.course_name}</span>
                               <span>{course.progress || course.progress_percent || 0}%</span>
-                            </div>
+                        </div>
                             <Progress value={course.progress || course.progress_percent || 0} className="h-2" />
-                            <div className="text-sm text-muted-foreground">
+                        <div className="text-sm text-muted-foreground">
                               {course.studentsCount || course.students_count || 0} học viên đăng ký
-                            </div>
-                          </div>
+                        </div>
+                      </div>
                         ))
                       ) : (
                         <div className="text-center py-4 text-muted-foreground">
                           Không có dữ liệu tiến độ khóa học
-                        </div>
+                  </div>
                       )}
                     </div>
                   )}
@@ -437,27 +437,27 @@ const AdminPage = () => {
                       <Loader2 className="h-8 w-8 animate-spin" />
                     </div>
                   ) : (
-                    <div className="rounded-md border">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Bài kiểm tra</TableHead>
-                            <TableHead className="text-right">Số lượng</TableHead>
-                            <TableHead className="text-right">Điểm TB</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Bài kiểm tra</TableHead>
+                          <TableHead className="text-right">Số lượng</TableHead>
+                          <TableHead className="text-right">Điểm TB</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
                           {examResults.length > 0 ? (
                             examResults.map((exam: any) => (
                               <TableRow key={exam.examId || exam.exam_id}>
                                 <TableCell className="font-medium">{exam.examTitle || exam.exam_title}</TableCell>
                                 <TableCell className="text-right">{exam.studentCount || exam.student_count || 0}</TableCell>
-                                <TableCell className="text-right">
+                            <TableCell className="text-right">
                                   <span className={`font-medium ${(exam.averageScore || exam.average_score || 0) >= 80 ? 'text-green-600' : (exam.averageScore || exam.average_score || 0) >= 60 ? 'text-amber-600' : 'text-red-600'}`}>
                                     {exam.averageScore || exam.average_score || 0}/100
-                                  </span>
-                                </TableCell>
-                              </TableRow>
+                              </span>
+                            </TableCell>
+                          </TableRow>
                             ))
                           ) : (
                             <TableRow>
@@ -466,9 +466,9 @@ const AdminPage = () => {
                               </TableCell>
                             </TableRow>
                           )}
-                        </TableBody>
-                      </Table>
-                    </div>
+                      </TableBody>
+                    </Table>
+                  </div>
                   )}
                 </CardContent>
               </Card>
@@ -494,37 +494,37 @@ const AdminPage = () => {
                     <Loader2 className="h-8 w-8 animate-spin" />
                   </div>
                 ) : (
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Tên người dùng</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Khóa học</TableHead>
-                          <TableHead>Trạng thái</TableHead>
-                          <TableHead>Hoạt động gần nhất</TableHead>
-                          <TableHead className="text-right">Thao tác</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Tên người dùng</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Khóa học</TableHead>
+                        <TableHead>Trạng thái</TableHead>
+                        <TableHead>Hoạt động gần nhất</TableHead>
+                        <TableHead className="text-right">Thao tác</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                         {users.length > 0 ? (
                           users.map((user: any) => (
-                            <TableRow key={user.id}>
+                        <TableRow key={user.id}>
                               <TableCell className="font-medium">{user.name || user.full_name}</TableCell>
-                              <TableCell>{user.email}</TableCell>
+                          <TableCell>{user.email}</TableCell>
                               <TableCell>{user.course_count || user.courses || 0}</TableCell>
-                              <TableCell>
-                                <div className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                                  {user.status === 'active' ? 'Hoạt động' : 'Không hoạt động'}
-                                </div>
-                              </TableCell>
+                          <TableCell>
+                            <div className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                              {user.status === 'active' ? 'Hoạt động' : 'Không hoạt động'}
+                            </div>
+                          </TableCell>
                               <TableCell>{user.last_active || user.lastActive || 'Không rõ'}</TableCell>
-                              <TableCell className="text-right">
-                                <Button variant="ghost" size="icon">
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
+                          <TableCell className="text-right">
+                            <Button variant="ghost" size="icon">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
                           ))
                         ) : (
                           <TableRow>
@@ -533,9 +533,9 @@ const AdminPage = () => {
                             </TableCell>
                           </TableRow>
                         )}
-                      </TableBody>
-                    </Table>
-                  </div>
+                    </TableBody>
+                  </Table>
+                </div>
                 )}
               </CardContent>
               <CardFooter className="flex justify-between border-t p-4">
@@ -627,38 +627,38 @@ const AdminPage = () => {
                     <Loader2 className="h-8 w-8 animate-spin" />
                   </div>
                 ) : (
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Tiêu đề khóa học</TableHead>
-                          <TableHead>Học viên</TableHead>
-                          <TableHead>Chương</TableHead>
-                          <TableHead>Bài học</TableHead>
-                          <TableHead>Ngày tạo</TableHead>
-                          <TableHead>Cập nhật</TableHead>
-                          <TableHead className="text-right">Thao tác</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Tiêu đề khóa học</TableHead>
+                        <TableHead>Học viên</TableHead>
+                        <TableHead>Chương</TableHead>
+                        <TableHead>Bài học</TableHead>
+                        <TableHead>Ngày tạo</TableHead>
+                        <TableHead>Cập nhật</TableHead>
+                        <TableHead className="text-right">Thao tác</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                         {courses.length > 0 ? (
                           courses.map((course: any) => (
-                            <TableRow key={course.id}>
-                              <TableCell className="font-medium">{course.title}</TableCell>
+                        <TableRow key={course.id}>
+                          <TableCell className="font-medium">{course.title}</TableCell>
                               <TableCell>{course.enrolled_count || course.enrolledCount || 0}</TableCell>
                               <TableCell>{course.chapters_count || course.chaptersCount || 0}</TableCell>
                               <TableCell>{course.lessons_count || course.lessonsCount || 0}</TableCell>
                               <TableCell>{course.created_at || course.createdAt || 'Không rõ'}</TableCell>
                               <TableCell>{course.updated_at || course.updatedAt || 'Không rõ'}</TableCell>
-                              <TableCell className="text-right">
-                                <Button variant="ghost" size="icon">
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
+                          <TableCell className="text-right">
+                              <Button variant="ghost" size="icon">
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                          </TableCell>
+                        </TableRow>
                           ))
                         ) : (
                           <TableRow>
@@ -667,9 +667,9 @@ const AdminPage = () => {
                             </TableCell>
                           </TableRow>
                         )}
-                      </TableBody>
-                    </Table>
-                  </div>
+                    </TableBody>
+                  </Table>
+                </div>
                 )}
               </CardContent>
             </Card>
