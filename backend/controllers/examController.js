@@ -265,13 +265,9 @@ exports.submitExam = async (req, res) => {
     const userExam = userExams[0];
     console.log('User exam found:', userExam);
     
-    // Kiểm tra bài đã nộp chưa
+    // Nếu bài kiểm tra đã được nộp trước đó, vẫn tiếp tục xử lý và cập nhật điểm số
     if (userExam.completed_at) {
-      console.log('Exam already completed');
-      return res.status(400).json({
-        status: 'error',
-        message: 'Bài kiểm tra đã được nộp trước đó'
-      });
+      console.log('Exam already completed, updating score');
     }
     
     // Lấy các câu hỏi của bài kiểm tra
@@ -330,10 +326,10 @@ exports.submitExam = async (req, res) => {
     
     console.log('Final score:', score);
     
-    // Cập nhật điểm và đánh dấu hoàn thành
+    // Cập nhật điểm và đánh dấu hoàn thành (hoặc cập nhật thời gian hoàn thành nếu đã nộp trước đó)
     await db.query(`
       UPDATE user_exam
-      SET score = ?, completed_at = CURRENT_TIMESTAMP
+      SET score = ?, completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `, [score, user_exam_id]);
     
